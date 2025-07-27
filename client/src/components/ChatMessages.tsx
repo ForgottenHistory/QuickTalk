@@ -19,23 +19,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div style={{
-      flex: 1,
-      overflowY: 'auto',
-      padding: '20px 0',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div className="messages-container">
       {messages.length === 0 ? (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          color: '#ffec3d',
-          fontSize: '16px',
-          fontStyle: 'italic'
-        }}>
+        <div className="empty-state">
           Start your conversation...
         </div>
       ) : (

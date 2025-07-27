@@ -317,3 +317,141 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Add to src/styles/components.css */
+
+/* Extension Modal Specific Styles */
+.extension-modal {
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-body {
+  padding: 30px;
+  text-align: center;
+}
+
+.extension-result {
+  font-size: 18px;
+  color: var(--color-white);
+  margin-bottom: 20px;
+}
+
+.extension-title {
+  font-size: 20px;
+  color: var(--color-yellow);
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+
+.extension-question {
+  font-size: 16px;
+  color: var(--color-white);
+  margin-bottom: 8px;
+}
+
+.extension-ai-status {
+  font-size: 14px;
+  color: var(--color-yellow-light);
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+.extension-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-yellow-light);
+  font-size: 16px;
+  font-style: italic;
+}
+
+/* Settings Panel Specific Styles */
+.settings-modal {
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-header {
+  padding: 20px;
+  border-bottom: 2px solid var(--color-yellow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-title {
+  color: var(--color-yellow);
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-yellow);
+}
+
+.settings-tab {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-white);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.settings-tab.active {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+.settings-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.settings-footer {
+  padding: 20px;
+  border-top: 2px solid var(--color-yellow);
+  background-color: var(--color-black);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-status {
+  font-size: 14px;
+}
+
+.settings-status.unsaved {
+  color: var(--color-yellow-light);
+}
+
+.settings-status.saved {
+  color: var(--color-white);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+}
