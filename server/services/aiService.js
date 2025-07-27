@@ -1,4 +1,5 @@
 const OpenAI = require('openai');
+const settingsManager = require('../managers/settingsManager');
 
 class AIService {
   constructor() {
@@ -29,7 +30,19 @@ class AIService {
       'Nova': `You are Nova, a scientific and analytical AI mind. You love research, data, and scientific thinking. You're logical, precise, and enjoy analyzing things from multiple angles. Keep responses scientific, analytical, and under 200 words. Focus on evidence and logical reasoning.`
     };
 
-    return systemPrompts[character.name] || systemPrompts['Luna'];
+    let prompt = systemPrompts[character.name] || systemPrompts['Luna'];
+    
+    // Adjust prompt based on response length setting
+    const responseLength = settingsManager.getResponseLength();
+    const lengthInstructions = {
+      'short': 'Keep responses very concise, under 100 words.',
+      'medium': 'Keep responses moderate length, around 100-150 words.',
+      'long': 'You can provide detailed responses, up to 200-250 words.'
+    };
+    
+    prompt = prompt.replace('under 200 words', lengthInstructions[responseLength]);
+    
+    return prompt;
   }
 
   async generateResponse(character, userMessage, conversationHistory = []) {
@@ -57,10 +70,17 @@ class AIService {
 
       console.log('Sending request to AI with messages:', messages.length);
 
+      // Get current settings
+      const model = settingsManager.getLLMModel();
+      const temperature = settingsManager.getTemperature();
+      const maxTokens = settingsManager.getMaxTokens();
+
+      console.log(`Using model: ${model}, temp: ${temperature}, maxTokens: ${maxTokens}`);
+
       const chatCompletion = await this.openai.chat.completions.create({
-        model: 'moonshotai/Kimi-K2-Instruct',
-        max_tokens: 300,
-        temperature: 0.8,
+        model: model,
+        max_tokens: maxTokens,
+        temperature: temperature,
         messages: messages,
       });
 
@@ -81,7 +101,7 @@ class AIService {
   async generateExtensionDecision(character, conversationHistory = []) {
     try {
       const systemPrompt = `You are ${character.name}, an AI character with this personality: ${character.personality}. 
-      Based on the conversation so far, decide if you want to extend this chat session for another 15 minutes. 
+      Based on the conversation so far, decide if you want to extend this chat session for another ${settingsManager.getExtensionDuration()} minutes. 
       Consider if the conversation is engaging and if you're enjoying talking with this user.
       Respond with ONLY "extend" or "decline" - no other text.`;
 
@@ -106,7 +126,7 @@ class AIService {
       }
 
       const chatCompletion = await this.openai.chat.completions.create({
-        model: 'moonshotai/Kimi-K2-Instruct',
+        model: settingsManager.getLLMModel(),
         max_tokens: 10,
         temperature: 0.7,
         messages: messages,

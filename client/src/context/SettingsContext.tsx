@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { SettingsState, AppSettings, LLMSettings } from '../types';
+import { settingsService } from '../services/settingsService';
 
 type SettingsAction = 
   | { type: 'TOGGLE_SETTINGS' }
@@ -7,8 +8,10 @@ type SettingsAction =
   | { type: 'SET_ACTIVE_TAB'; payload: 'app' | 'llm' }
   | { type: 'UPDATE_APP_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'UPDATE_LLM_SETTINGS'; payload: Partial<LLMSettings> }
-  | { type: 'RESET_APP_SETTINGS' }
-  | { type: 'RESET_LLM_SETTINGS' };
+  | { type: 'SET_APP_SETTINGS'; payload: AppSettings }
+  | { type: 'SET_LLM_SETTINGS'; payload: LLMSettings }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null };
 
 const defaultAppSettings: AppSettings = {
   sessionDuration: 15,
@@ -26,14 +29,21 @@ const defaultLLMSettings: LLMSettings = {
   responseLength: 'medium'
 };
 
-const initialState: SettingsState = {
+interface ExtendedSettingsState extends SettingsState {
+  isLoading: boolean;
+  error: string | null;
+}
+
+const initialState: ExtendedSettingsState = {
   isOpen: false,
   activeTab: 'app',
   appSettings: defaultAppSettings,
-  llmSettings: defaultLLMSettings
+  llmSettings: defaultLLMSettings,
+  isLoading: false,
+  error: null
 };
 
-const settingsReducer = (state: SettingsState, action: SettingsAction): SettingsState => {
+const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): ExtendedSettingsState => {
   switch (action.type) {
     case 'TOGGLE_SETTINGS':
       return { ...state, isOpen: !state.isOpen };
@@ -51,26 +61,27 @@ const settingsReducer = (state: SettingsState, action: SettingsAction): Settings
         ...state, 
         llmSettings: { ...state.llmSettings, ...action.payload } 
       };
-    case 'RESET_APP_SETTINGS':
-      return { 
-        ...state, 
-        appSettings: defaultAppSettings 
-      };
-    case 'RESET_LLM_SETTINGS':
-      return { 
-        ...state, 
-        llmSettings: defaultLLMSettings 
-      };
+    case 'SET_APP_SETTINGS':
+      return { ...state, appSettings: action.payload };
+    case 'SET_LLM_SETTINGS':
+      return { ...state, llmSettings: action.payload };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    case 'SET_ERROR':
+      return { ...state, error: action.payload };
     default:
       return state;
   }
 };
 
 interface SettingsContextType {
-  settings: SettingsState;
+  settings: ExtendedSettingsState;
   dispatch: React.Dispatch<SettingsAction>;
-  saveSettings: () => void;
-  loadSettings: () => void;
+  updateAppSettings: (updates: Partial<AppSettings>) => Promise<void>;
+  updateLLMSettings: (updates: Partial<LLMSettings>) => Promise<void>;
+  resetAppSettings: () => Promise<void>;
+  resetLLMSettings: () => Promise<void>;
+  loadSettings: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -78,34 +89,72 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, dispatch] = useReducer(settingsReducer, initialState);
 
-  const saveSettings = () => {
+  const handleError = (error: any) => {
+    console.error('Settings error:', error);
+    dispatch({ type: 'SET_ERROR', payload: error.message || 'An error occurred' });
+    setTimeout(() => {
+      dispatch({ type: 'SET_ERROR', payload: null });
+    }, 5000);
+  };
+
+  const loadSettings = async () => {
     try {
-      const settingsToSave = {
-        appSettings: settings.appSettings,
-        llmSettings: settings.llmSettings
-      };
-      // Note: Using in-memory storage since localStorage isn't available
-      (window as any).quicktalkSettings = settingsToSave;
-      console.log('Settings saved to memory');
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const data = await settingsService.getSettings();
+      dispatch({ type: 'SET_APP_SETTINGS', payload: data.appSettings });
+      dispatch({ type: 'SET_LLM_SETTINGS', payload: data.llmSettings });
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      handleError(error);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
-  const loadSettings = () => {
+  const updateAppSettings = async (updates: Partial<AppSettings>) => {
     try {
-      const savedSettings = (window as any).quicktalkSettings;
-      if (savedSettings) {
-        if (savedSettings.appSettings) {
-          dispatch({ type: 'UPDATE_APP_SETTINGS', payload: savedSettings.appSettings });
-        }
-        if (savedSettings.llmSettings) {
-          dispatch({ type: 'UPDATE_LLM_SETTINGS', payload: savedSettings.llmSettings });
-        }
-        console.log('Settings loaded from memory');
-      }
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const updatedSettings = await settingsService.updateAppSettings(updates);
+      dispatch({ type: 'SET_APP_SETTINGS', payload: updatedSettings });
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      handleError(error);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const updateLLMSettings = async (updates: Partial<LLMSettings>) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const updatedSettings = await settingsService.updateLLMSettings(updates);
+      dispatch({ type: 'SET_LLM_SETTINGS', payload: updatedSettings });
+    } catch (error) {
+      handleError(error);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const resetAppSettings = async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const resetSettings = await settingsService.resetAppSettings();
+      dispatch({ type: 'SET_APP_SETTINGS', payload: resetSettings });
+    } catch (error) {
+      handleError(error);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const resetLLMSettings = async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const resetSettings = await settingsService.resetLLMSettings();
+      dispatch({ type: 'SET_LLM_SETTINGS', payload: resetSettings });
+    } catch (error) {
+      handleError(error);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
@@ -114,13 +163,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     loadSettings();
   }, []);
 
-  // Auto-save when settings change
-  useEffect(() => {
-    saveSettings();
-  }, [settings.appSettings, settings.llmSettings]);
-
   return (
-    <SettingsContext.Provider value={{ settings, dispatch, saveSettings, loadSettings }}>
+    <SettingsContext.Provider value={{ 
+      settings, 
+      dispatch, 
+      updateAppSettings,
+      updateLLMSettings,
+      resetAppSettings,
+      resetLLMSettings,
+      loadSettings
+    }}>
       {children}
     </SettingsContext.Provider>
   );

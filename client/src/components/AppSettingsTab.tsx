@@ -2,17 +2,14 @@ import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
 
 const AppSettingsTab: React.FC = () => {
-  const { settings, dispatch } = useSettingsContext();
+  const { settings, updateAppSettings, resetAppSettings } = useSettingsContext();
 
-  const handleAppSettingChange = (key: string, value: any) => {
-    dispatch({ 
-      type: 'UPDATE_APP_SETTINGS', 
-      payload: { [key]: value } 
-    });
+  const handleAppSettingChange = async (key: string, value: any) => {
+    await updateAppSettings({ [key]: value });
   };
 
-  const handleReset = () => {
-    dispatch({ type: 'RESET_APP_SETTINGS' });
+  const handleReset = async () => {
+    await resetAppSettings();
   };
 
   const settingStyle = {
@@ -35,7 +32,8 @@ const AppSettingsTab: React.FC = () => {
     backgroundColor: '#000000',
     color: '#ffffff',
     fontSize: '14px',
-    outline: 'none'
+    outline: 'none',
+    opacity: settings.isLoading ? 0.6 : 1
   };
 
   const checkboxContainerStyle = {
@@ -43,6 +41,20 @@ const AppSettingsTab: React.FC = () => {
     alignItems: 'center',
     gap: '12px'
   };
+
+  if (settings.error) {
+    return (
+      <div style={{
+        backgroundColor: '#ff4444',
+        color: '#ffffff',
+        padding: '16px',
+        borderRadius: '8px',
+        marginBottom: '20px'
+      }}>
+        Error: {settings.error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -53,6 +65,16 @@ const AppSettingsTab: React.FC = () => {
       }}>
         Application Settings
       </h3>
+
+      {settings.isLoading && (
+        <div style={{
+          color: '#ffd900',
+          marginBottom: '16px',
+          fontSize: '14px'
+        }}>
+          ⏳ Saving settings...
+        </div>
+      )}
 
       {/* Session Duration */}
       <div style={settingStyle}>
@@ -65,6 +87,7 @@ const AppSettingsTab: React.FC = () => {
           max="60"
           value={settings.appSettings.sessionDuration}
           onChange={(e) => handleAppSettingChange('sessionDuration', parseInt(e.target.value))}
+          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -83,6 +106,7 @@ const AppSettingsTab: React.FC = () => {
           max="30"
           value={settings.appSettings.extensionDuration}
           onChange={(e) => handleAppSettingChange('extensionDuration', parseInt(e.target.value))}
+          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -101,6 +125,7 @@ const AppSettingsTab: React.FC = () => {
           max="5"
           value={settings.appSettings.extensionWarningTime}
           onChange={(e) => handleAppSettingChange('extensionWarningTime', parseInt(e.target.value))}
+          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -116,6 +141,7 @@ const AppSettingsTab: React.FC = () => {
             id="autoConnect"
             checked={settings.appSettings.autoConnect}
             onChange={(e) => handleAppSettingChange('autoConnect', e.target.checked)}
+            disabled={settings.isLoading}
             style={{
               width: '20px',
               height: '20px',
@@ -143,6 +169,7 @@ const AppSettingsTab: React.FC = () => {
             id="soundEnabled"
             checked={settings.appSettings.soundEnabled}
             onChange={(e) => handleAppSettingChange('soundEnabled', e.target.checked)}
+            disabled={settings.isLoading}
             style={{
               width: '20px',
               height: '20px',
@@ -170,15 +197,17 @@ const AppSettingsTab: React.FC = () => {
       }}>
         <button
           onClick={handleReset}
+          disabled={settings.isLoading}
           style={{
             padding: '12px 24px',
             borderRadius: '8px',
             border: '2px solid #ffd900',
             backgroundColor: 'transparent',
             color: '#ffd900',
-            cursor: 'pointer',
+            cursor: settings.isLoading ? 'not-allowed' : 'pointer',
             fontSize: '14px',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            opacity: settings.isLoading ? 0.6 : 1
           }}
         >
           🔄 Reset to Defaults

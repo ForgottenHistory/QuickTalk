@@ -2,17 +2,14 @@ import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
 
 const LLMSettingsTab: React.FC = () => {
-  const { settings, dispatch } = useSettingsContext();
+  const { settings, updateLLMSettings, resetLLMSettings } = useSettingsContext();
 
-  const handleLLMSettingChange = (key: string, value: any) => {
-    dispatch({ 
-      type: 'UPDATE_LLM_SETTINGS', 
-      payload: { [key]: value } 
-    });
+  const handleLLMSettingChange = async (key: string, value: any) => {
+    await updateLLMSettings({ [key]: value });
   };
 
-  const handleReset = () => {
-    dispatch({ type: 'RESET_LLM_SETTINGS' });
+  const handleReset = async () => {
+    await resetLLMSettings();
   };
 
   const settingStyle = {
@@ -35,12 +32,13 @@ const LLMSettingsTab: React.FC = () => {
     backgroundColor: '#000000',
     color: '#ffffff',
     fontSize: '14px',
-    outline: 'none'
+    outline: 'none',
+    opacity: settings.isLoading ? 0.6 : 1
   };
 
   const selectStyle = {
     ...inputStyle,
-    cursor: 'pointer'
+    cursor: settings.isLoading ? 'not-allowed' : 'pointer'
   };
 
   const availableModels = [
@@ -50,6 +48,20 @@ const LLMSettingsTab: React.FC = () => {
     'gpt-3.5-turbo',
     'llama-2-70b'
   ];
+
+  if (settings.error) {
+    return (
+      <div style={{
+        backgroundColor: '#ff4444',
+        color: '#ffffff',
+        padding: '16px',
+        borderRadius: '8px',
+        marginBottom: '20px'
+      }}>
+        Error: {settings.error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -61,6 +73,16 @@ const LLMSettingsTab: React.FC = () => {
         Large Language Model Settings
       </h3>
 
+      {settings.isLoading && (
+        <div style={{
+          color: '#ffd900',
+          marginBottom: '16px',
+          fontSize: '14px'
+        }}>
+          ⏳ Saving settings...
+        </div>
+      )}
+
       {/* Model Selection */}
       <div style={settingStyle}>
         <label style={labelStyle}>
@@ -69,6 +91,7 @@ const LLMSettingsTab: React.FC = () => {
         <select
           value={settings.llmSettings.model}
           onChange={(e) => handleLLMSettingChange('model', e.target.value)}
+          disabled={settings.isLoading}
           style={selectStyle}
         >
           {availableModels.map(model => (
@@ -94,13 +117,15 @@ const LLMSettingsTab: React.FC = () => {
           step="0.1"
           value={settings.llmSettings.temperature}
           onChange={(e) => handleLLMSettingChange('temperature', parseFloat(e.target.value))}
+          disabled={settings.isLoading}
           style={{
             width: '100%',
             height: '8px',
             borderRadius: '4px',
             background: '#000000',
             outline: 'none',
-            accentColor: '#ffd900'
+            accentColor: '#ffd900',
+            opacity: settings.isLoading ? 0.6 : 1
           }}
         />
         <div style={{ 
@@ -130,6 +155,7 @@ const LLMSettingsTab: React.FC = () => {
           step="50"
           value={settings.llmSettings.maxTokens}
           onChange={(e) => handleLLMSettingChange('maxTokens', parseInt(e.target.value))}
+          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -145,6 +171,7 @@ const LLMSettingsTab: React.FC = () => {
         <select
           value={settings.llmSettings.responseLength}
           onChange={(e) => handleLLMSettingChange('responseLength', e.target.value)}
+          disabled={settings.isLoading}
           style={selectStyle}
         >
           <option value="short" style={{ backgroundColor: '#000000' }}>Short (50-150 tokens)</option>
@@ -168,6 +195,7 @@ const LLMSettingsTab: React.FC = () => {
             id="systemPromptCustomization"
             checked={settings.llmSettings.systemPromptCustomization}
             onChange={(e) => handleLLMSettingChange('systemPromptCustomization', e.target.checked)}
+            disabled={settings.isLoading}
             style={{
               width: '20px',
               height: '20px',
@@ -219,15 +247,17 @@ const LLMSettingsTab: React.FC = () => {
       }}>
         <button
           onClick={handleReset}
+          disabled={settings.isLoading}
           style={{
             padding: '12px 24px',
             borderRadius: '8px',
             border: '2px solid #ffd900',
             backgroundColor: 'transparent',
             color: '#ffd900',
-            cursor: 'pointer',
+            cursor: settings.isLoading ? 'not-allowed' : 'pointer',
             fontSize: '14px',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            opacity: settings.isLoading ? 0.6 : 1
           }}
         >
           🔄 Reset to Defaults
