@@ -1,10 +1,32 @@
 import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
+import { 
+  SettingField, 
+  NumberInput, 
+  SelectInput, 
+  CheckboxInput, 
+  RangeInput, 
+  ResetButton 
+} from './SettingField';
 
 const LLMSettingsTab: React.FC = () => {
   const { settings, dispatch, resetLLMSettings } = useSettingsContext();
 
-  const handleLLMSettingChange = (key: string, value: any) => {
+  const updateString = (key: string, value: string) => {
+    dispatch({ 
+      type: 'UPDATE_LLM_SETTINGS_LOCAL', 
+      payload: { [key]: value } 
+    });
+  };
+
+  const updateNumber = (key: string, value: number) => {
+    dispatch({ 
+      type: 'UPDATE_LLM_SETTINGS_LOCAL', 
+      payload: { [key]: value } 
+    });
+  };
+
+  const updateBoolean = (key: string, value: boolean) => {
     dispatch({ 
       type: 'UPDATE_LLM_SETTINGS_LOCAL', 
       payload: { [key]: value } 
@@ -12,201 +34,95 @@ const LLMSettingsTab: React.FC = () => {
   };
 
   const handleReset = async () => {
-    const confirmReset = window.confirm('Are you sure you want to reset LLM settings to defaults?');
-    if (confirmReset) {
+    if (window.confirm('Reset LLM settings to defaults?')) {
       await resetLLMSettings();
     }
   };
 
-  const settingStyle = {
-    marginBottom: '24px'
-  };
+  const modelOptions = [
+    { value: 'moonshotai/Kimi-K2-Instruct', label: 'moonshotai/Kimi-K2-Instruct' },
+    { value: 'claude-3-sonnet', label: 'claude-3-sonnet' },
+    { value: 'gpt-4-turbo', label: 'gpt-4-turbo' },
+    { value: 'gpt-3.5-turbo', label: 'gpt-3.5-turbo' },
+    { value: 'llama-2-70b', label: 'llama-2-70b' }
+  ];
 
-  const labelStyle = {
-    display: 'block',
-    color: '#ffffff',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '8px'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px',
-    borderRadius: '8px',
-    border: '2px solid #ffd900',
-    backgroundColor: '#000000',
-    color: '#ffffff',
-    fontSize: '14px',
-    outline: 'none'
-  };
-
-  const selectStyle = {
-    ...inputStyle,
-    cursor: 'pointer'
-  };
-
-  const availableModels = [
-    'moonshotai/Kimi-K2-Instruct',
-    'claude-3-sonnet',
-    'gpt-4-turbo',
-    'gpt-3.5-turbo',
-    'llama-2-70b'
+  const lengthOptions = [
+    { value: 'short', label: 'Short (50-150 tokens)' },
+    { value: 'medium', label: 'Medium (150-300 tokens)' },
+    { value: 'long', label: 'Long (300-500 tokens)' }
   ];
 
   return (
     <div>
-      <h3 style={{
-        color: '#ffd900',
-        marginBottom: '24px',
-        fontSize: '20px'
-      }}>
+      <h3 style={{ color: '#ffd900', marginBottom: '24px', fontSize: '20px' }}>
         Large Language Model Settings
       </h3>
 
-      {/* Model Selection */}
-      <div style={settingStyle}>
-        <label style={labelStyle}>
-          🤖 AI Model
-        </label>
-        <select
+      <SettingField
+        label="🤖 AI Model"
+        description="Choose the AI model for generating responses"
+      >
+        <SelectInput
           value={settings.llmSettings.model}
-          onChange={(e) => handleLLMSettingChange('model', e.target.value)}
-          style={selectStyle}
-        >
-          {availableModels.map(model => (
-            <option key={model} value={model} style={{ backgroundColor: '#000000' }}>
-              {model}
-            </option>
-          ))}
-        </select>
-        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-          Choose the AI model for generating responses
-        </small>
-      </div>
+          onChange={(v) => updateString('model', v)}
+          options={modelOptions}
+        />
+      </SettingField>
 
-      {/* Temperature */}
-      <div style={settingStyle}>
-        <label style={labelStyle}>
-          🌡️ Creativity (Temperature): {settings.llmSettings.temperature}
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
+      <SettingField
+        label={`🌡️ Creativity (Temperature): ${settings.llmSettings.temperature}`}
+        description="Higher values make responses more creative but less predictable"
+      >
+        <RangeInput
           value={settings.llmSettings.temperature}
-          onChange={(e) => handleLLMSettingChange('temperature', parseFloat(e.target.value))}
-          style={{
-            width: '100%',
-            height: '8px',
-            borderRadius: '4px',
-            background: '#000000',
-            outline: 'none',
-            accentColor: '#ffd900'
-          }}
+          onChange={(v) => updateNumber('temperature', v)}
+          min={0}
+          max={1}
+          step={0.1}
+          minLabel="Conservative (0.0)"
+          maxLabel="Creative (1.0)"
         />
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          fontSize: '12px', 
-          color: '#ffec3d',
-          marginTop: '4px'
-        }}>
-          <span>Conservative (0.0)</span>
-          <span>Creative (1.0)</span>
-        </div>
-        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-          Higher values make responses more creative but less predictable
-        </small>
-      </div>
+      </SettingField>
 
-      {/* Max Tokens */}
-      <div style={settingStyle}>
-        <label style={labelStyle}>
-          📝 Max Response Length (tokens)
-        </label>
-        <input
-          type="number"
-          min="50"
-          max="1000"
-          step="50"
+      <SettingField
+        label="📝 Max Response Length (tokens)"
+        description="Maximum length of AI responses (50-1000 tokens, ~300 tokens ≈ 200 words)"
+      >
+        <NumberInput
           value={settings.llmSettings.maxTokens}
-          onChange={(e) => handleLLMSettingChange('maxTokens', parseInt(e.target.value))}
-          style={inputStyle}
+          onChange={(v) => updateNumber('maxTokens', v)}
+          min={50}
+          max={1000}
+          step={50}
         />
-        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-          Maximum length of AI responses (50-1000 tokens, ~300 tokens ≈ 200 words)
-        </small>
-      </div>
+      </SettingField>
 
-      {/* Response Length Preset */}
-      <div style={settingStyle}>
-        <label style={labelStyle}>
-          📏 Response Length Preset
-        </label>
-        <select
+      <SettingField
+        label="📏 Response Length Preset"
+        description="Quick preset for common response lengths"
+      >
+        <SelectInput
           value={settings.llmSettings.responseLength}
-          onChange={(e) => handleLLMSettingChange('responseLength', e.target.value)}
-          style={selectStyle}
-        >
-          <option value="short" style={{ backgroundColor: '#000000' }}>Short (50-150 tokens)</option>
-          <option value="medium" style={{ backgroundColor: '#000000' }}>Medium (150-300 tokens)</option>
-          <option value="long" style={{ backgroundColor: '#000000' }}>Long (300-500 tokens)</option>
-        </select>
-        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-          Quick preset for common response lengths
-        </small>
-      </div>
+          onChange={(v) => updateString('responseLength', v)}
+          options={lengthOptions}
+        />
+      </SettingField>
 
-      {/* System Prompt Customization */}
-      <div style={settingStyle}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <input
-            type="checkbox"
-            id="systemPromptCustomization"
-            checked={settings.llmSettings.systemPromptCustomization}
-            onChange={(e) => handleLLMSettingChange('systemPromptCustomization', e.target.checked)}
-            style={{
-              width: '20px',
-              height: '20px',
-              accentColor: '#ffd900'
-            }}
-          />
-          <label htmlFor="systemPromptCustomization" style={{
-            ...labelStyle,
-            margin: 0,
-            cursor: 'pointer'
-          }}>
-            ⚙️ Enable custom system prompts
-          </label>
-        </div>
-        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-          Allow modification of AI character system prompts (Advanced users only)
-        </small>
-      </div>
+      <SettingField
+        description="Allow modification of AI character system prompts (Advanced users only)"
+      >
+        <CheckboxInput
+          id="systemPromptCustomization"
+          checked={settings.llmSettings.systemPromptCustomization}
+          onChange={(v) => updateBoolean('systemPromptCustomization', v)}
+          label="⚙️ Enable custom system prompts"
+        />
+      </SettingField>
 
-      {/* Performance Info */}
-      <div style={{
-        backgroundColor: '#000000',
-        padding: '16px',
-        borderRadius: '8px',
-        border: '1px solid #ffd900',
-        marginBottom: '24px'
-      }}>
-        <h4 style={{ color: '#ffd900', margin: '0 0 8px 0', fontSize: '14px' }}>
-          💡 Performance Tips
-        </h4>
-        <ul style={{ 
-          color: '#ffec3d', 
-          fontSize: '12px', 
-          margin: 0, 
-          paddingLeft: '16px' 
-        }}>
+      <div className="performance-info">
+        <h4>💡 Performance Tips</h4>
+        <ul>
           <li>Lower temperature (0.3-0.5) for more consistent responses</li>
           <li>Higher temperature (0.7-0.9) for more creative conversations</li>
           <li>Shorter responses load faster and use less API credits</li>
@@ -214,33 +130,11 @@ const LLMSettingsTab: React.FC = () => {
         </ul>
       </div>
 
-      {/* Reset Button */}
-      <div style={{
-        marginTop: '32px',
-        paddingTop: '24px',
-        borderTop: '1px solid #ffd900'
-      }}>
-        <button
-          onClick={handleReset}
-          disabled={settings.isLoading}
-          style={{
-            padding: '12px 24px',
-            borderRadius: '8px',
-            border: '2px solid #ffd900',
-            backgroundColor: 'transparent',
-            color: '#ffd900',
-            cursor: settings.isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            opacity: settings.isLoading ? 0.6 : 1
-          }}
-        >
-          {settings.isLoading ? '⏳ Resetting...' : '🔄 Reset to Defaults'}
-        </button>
-        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '8px', display: 'block' }}>
-          This will immediately reset and save the LLM settings
-        </small>
-      </div>
+      <ResetButton
+        onClick={handleReset}
+        loading={settings.isLoading}
+        type="LLM"
+      />
     </div>
   );
 };
