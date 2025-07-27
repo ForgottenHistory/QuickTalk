@@ -30,6 +30,71 @@ const SettingsPanel: React.FC = () => {
     discardChanges();
   };
 
+  // Show loading state for initial load
+  if (!settings.initialLoadComplete) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          backgroundColor: '#212121',
+          borderRadius: '16px',
+          border: '2px solid #ffd900',
+          padding: '40px',
+          textAlign: 'center',
+          maxWidth: '400px'
+        }}>
+          <div style={{
+            fontSize: '24px',
+            color: '#ffd900',
+            marginBottom: '16px'
+          }}>
+            ⚙️ Loading Settings...
+          </div>
+          <div style={{
+            color: '#ffffff',
+            marginBottom: '20px'
+          }}>
+            Please wait while we load your preferences
+          </div>
+          <div style={{
+            width: '200px',
+            height: '4px',
+            backgroundColor: '#000000',
+            borderRadius: '2px',
+            overflow: 'hidden',
+            margin: '0 auto'
+          }}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#ffd900',
+              animation: 'loading 2s ease-in-out infinite'
+            }} />
+          </div>
+          <style>
+            {`
+              @keyframes loading {
+                0% { transform: translateX(-100%); }
+                50% { transform: translateX(0%); }
+                100% { transform: translateX(100%); }
+              }
+            `}
+          </style>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: 'fixed',
@@ -102,12 +167,13 @@ const SettingsPanel: React.FC = () => {
         {/* Status Messages */}
         {settings.error && (
           <div style={{
-            backgroundColor: '#ff4444',
+            backgroundColor: settings.error.includes('using defaults') ? '#ff8800' : '#ff4444',
             color: '#ffffff',
             padding: '12px 20px',
             fontSize: '14px'
           }}>
-            Error: {settings.error}
+            {settings.error.includes('using defaults') ? '⚠️ ' : '❌ '}
+            {settings.error}
           </div>
         )}
 

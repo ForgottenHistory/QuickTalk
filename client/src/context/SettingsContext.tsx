@@ -14,7 +14,8 @@ type SettingsAction =
   | { type: 'SET_SAVED_LLM_SETTINGS'; payload: LLMSettings }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_SAVE_SUCCESS'; payload: boolean };
+  | { type: 'SET_SAVE_SUCCESS'; payload: boolean }
+  | { type: 'SET_INITIAL_LOAD_COMPLETE'; payload: boolean };
 
 const defaultAppSettings: AppSettings = {
   sessionDuration: 15,
@@ -39,6 +40,7 @@ interface ExtendedSettingsState extends SettingsState {
   savedLLMSettings: LLMSettings; // Server state
   hasUnsavedChanges: boolean;
   saveSuccess: boolean;
+  initialLoadComplete: boolean;
 }
 
 const initialState: ExtendedSettingsState = {
@@ -48,10 +50,11 @@ const initialState: ExtendedSettingsState = {
   llmSettings: defaultLLMSettings,
   savedAppSettings: defaultAppSettings,
   savedLLMSettings: defaultLLMSettings,
-  isLoading: false,
+  isLoading: true, // Start with loading true
   error: null,
   hasUnsavedChanges: false,
-  saveSuccess: false
+  saveSuccess: false,
+  initialLoadComplete: false
 };
 
 const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): ExtendedSettingsState => {
@@ -104,6 +107,8 @@ const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): 
       return { ...state, error: action.payload };
     case 'SET_SAVE_SUCCESS':
       return { ...state, saveSuccess: action.payload };
+    case 'SET_INITIAL_LOAD_COMPLETE':
+      return { ...state, initialLoadComplete: action.payload };
     default:
       return state;
   }
@@ -126,7 +131,17 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const handleError = (error: any) => {
     console.error('Settings error:', error);
-    dispatch({ type: 'SET_ERROR', payload: error.message || 'An error occurred' });
+    const errorMessage = error.message || 'An error occurred';
+    
+    // More user-friendly error messages
+    let displayMessage = errorMessage;
+    if (errorMessage.includes('404')) {
+      displayMessage = 'Settings service not available - using defaults';
+    } else if (errorMessage.includes('Failed to fetch')) {
+      displayMessage = 'Cannot connect to server - using defaults';
+    }
+    
+    dispatch({ type: 'SET_ERROR', payload: displayMessage });
     setTimeout(() => {
       dispatch({ type: 'SET_ERROR', payload: null });
     }, 5000);
@@ -135,11 +150,18 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const loadSettings = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
       const data = await settingsService.getSettings();
       dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: data.appSettings });
       dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: data.llmSettings });
+      dispatch({ type: 'SET_INITIAL_LOAD_COMPLETE', payload: true });
     } catch (error) {
       handleError(error);
+      // Use defaults on error
+      dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: defaultAppSettings });
+      dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: defaultLLMSettings });
+      dispatch({ type: 'SET_INITIAL_LOAD_COMPLETE', payload: true });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -201,9 +223,28 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     dispatch({ type: 'SET_LLM_SETTINGS', payload: settings.savedLLMSettings });
   };
 
-  // Load settings on mount
+  // Load settings on mount with retry logic
   useEffect(() => {
-    loadSettings();
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    const loadWithRetry = async () => {
+      try {
+        await loadSettings();
+      } catch (error) {
+        retryCount++;
+        if (retryCount < maxRetries) {
+          console.log(`Settings load failed, retrying... (${retryCount}/${maxRetries})`);
+          setTimeout(loadWithRetry, 1000 * retryCount); // Exponential backoff
+        } else {
+          console.log('Settings load failed after retries, using defaults');
+          dispatch({ type: 'SET_INITIAL_LOAD_COMPLETE', payload: true });
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
+      }
+    };
+
+    loadWithRetry();
   }, []);
 
   return (

@@ -11,7 +11,7 @@ export const useAppInitialization = () => {
 
   useEffect(() => {
     // Don't initialize if settings are still loading or already connected
-    if (settings.isLoading || state.isConnected || state.sessionId) {
+    if (!settings.initialLoadComplete || state.isConnected || state.sessionId) {
       return;
     }
 
@@ -84,5 +84,5 @@ export const useAppInitialization = () => {
     return () => {
       socketService.disconnect();
     };
-  }, [settings.isLoading]); // Only depend on loading state
+  }, [settings.initialLoadComplete]); // Only depend on initial load completion
 };
