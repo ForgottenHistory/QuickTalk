@@ -6,12 +6,15 @@ type SettingsAction =
   | { type: 'TOGGLE_SETTINGS' }
   | { type: 'SET_SETTINGS_OPEN'; payload: boolean }
   | { type: 'SET_ACTIVE_TAB'; payload: 'app' | 'llm' }
-  | { type: 'UPDATE_APP_SETTINGS'; payload: Partial<AppSettings> }
-  | { type: 'UPDATE_LLM_SETTINGS'; payload: Partial<LLMSettings> }
+  | { type: 'UPDATE_APP_SETTINGS_LOCAL'; payload: Partial<AppSettings> }
+  | { type: 'UPDATE_LLM_SETTINGS_LOCAL'; payload: Partial<LLMSettings> }
   | { type: 'SET_APP_SETTINGS'; payload: AppSettings }
   | { type: 'SET_LLM_SETTINGS'; payload: LLMSettings }
+  | { type: 'SET_SAVED_APP_SETTINGS'; payload: AppSettings }
+  | { type: 'SET_SAVED_LLM_SETTINGS'; payload: LLMSettings }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_SAVE_SUCCESS'; payload: boolean };
 
 const defaultAppSettings: AppSettings = {
   sessionDuration: 15,
@@ -32,6 +35,10 @@ const defaultLLMSettings: LLMSettings = {
 interface ExtendedSettingsState extends SettingsState {
   isLoading: boolean;
   error: string | null;
+  savedAppSettings: AppSettings; // Server state
+  savedLLMSettings: LLMSettings; // Server state
+  hasUnsavedChanges: boolean;
+  saveSuccess: boolean;
 }
 
 const initialState: ExtendedSettingsState = {
@@ -39,8 +46,12 @@ const initialState: ExtendedSettingsState = {
   activeTab: 'app',
   appSettings: defaultAppSettings,
   llmSettings: defaultLLMSettings,
+  savedAppSettings: defaultAppSettings,
+  savedLLMSettings: defaultLLMSettings,
   isLoading: false,
-  error: null
+  error: null,
+  hasUnsavedChanges: false,
+  saveSuccess: false
 };
 
 const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): ExtendedSettingsState => {
@@ -51,24 +62,48 @@ const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): 
       return { ...state, isOpen: action.payload };
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTab: action.payload };
-    case 'UPDATE_APP_SETTINGS':
+    case 'UPDATE_APP_SETTINGS_LOCAL':
+      const newAppSettings = { ...state.appSettings, ...action.payload };
       return { 
         ...state, 
-        appSettings: { ...state.appSettings, ...action.payload } 
+        appSettings: newAppSettings,
+        hasUnsavedChanges: JSON.stringify(newAppSettings) !== JSON.stringify(state.savedAppSettings) ||
+                          JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
       };
-    case 'UPDATE_LLM_SETTINGS':
+    case 'UPDATE_LLM_SETTINGS_LOCAL':
+      const newLLMSettings = { ...state.llmSettings, ...action.payload };
       return { 
         ...state, 
-        llmSettings: { ...state.llmSettings, ...action.payload } 
+        llmSettings: newLLMSettings,
+        hasUnsavedChanges: JSON.stringify(state.appSettings) !== JSON.stringify(state.savedAppSettings) ||
+                          JSON.stringify(newLLMSettings) !== JSON.stringify(state.savedLLMSettings)
       };
     case 'SET_APP_SETTINGS':
       return { ...state, appSettings: action.payload };
     case 'SET_LLM_SETTINGS':
       return { ...state, llmSettings: action.payload };
+    case 'SET_SAVED_APP_SETTINGS':
+      return { 
+        ...state, 
+        savedAppSettings: action.payload,
+        appSettings: action.payload,
+        hasUnsavedChanges: JSON.stringify(action.payload) !== JSON.stringify(state.savedAppSettings) ||
+                          JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
+      };
+    case 'SET_SAVED_LLM_SETTINGS':
+      return { 
+        ...state, 
+        savedLLMSettings: action.payload,
+        llmSettings: action.payload,
+        hasUnsavedChanges: JSON.stringify(state.appSettings) !== JSON.stringify(state.savedAppSettings) ||
+                          JSON.stringify(action.payload) !== JSON.stringify(state.savedLLMSettings)
+      };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'SET_ERROR':
       return { ...state, error: action.payload };
+    case 'SET_SAVE_SUCCESS':
+      return { ...state, saveSuccess: action.payload };
     default:
       return state;
   }
@@ -77,11 +112,11 @@ const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): 
 interface SettingsContextType {
   settings: ExtendedSettingsState;
   dispatch: React.Dispatch<SettingsAction>;
-  updateAppSettings: (updates: Partial<AppSettings>) => Promise<void>;
-  updateLLMSettings: (updates: Partial<LLMSettings>) => Promise<void>;
+  saveAllSettings: () => Promise<void>;
   resetAppSettings: () => Promise<void>;
   resetLLMSettings: () => Promise<void>;
   loadSettings: () => Promise<void>;
+  discardChanges: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -101,8 +136,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const data = await settingsService.getSettings();
-      dispatch({ type: 'SET_APP_SETTINGS', payload: data.appSettings });
-      dispatch({ type: 'SET_LLM_SETTINGS', payload: data.llmSettings });
+      dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: data.appSettings });
+      dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: data.llmSettings });
     } catch (error) {
       handleError(error);
     } finally {
@@ -110,23 +145,26 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const updateAppSettings = async (updates: Partial<AppSettings>) => {
+  const saveAllSettings = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const updatedSettings = await settingsService.updateAppSettings(updates);
-      dispatch({ type: 'SET_APP_SETTINGS', payload: updatedSettings });
-    } catch (error) {
-      handleError(error);
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  };
-
-  const updateLLMSettings = async (updates: Partial<LLMSettings>) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      const updatedSettings = await settingsService.updateLLMSettings(updates);
-      dispatch({ type: 'SET_LLM_SETTINGS', payload: updatedSettings });
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      // Save both app and LLM settings
+      const [updatedAppSettings, updatedLLMSettings] = await Promise.all([
+        settingsService.updateAppSettings(settings.appSettings),
+        settingsService.updateLLMSettings(settings.llmSettings)
+      ]);
+      
+      dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: updatedAppSettings });
+      dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: updatedLLMSettings });
+      
+      // Show success message
+      dispatch({ type: 'SET_SAVE_SUCCESS', payload: true });
+      setTimeout(() => {
+        dispatch({ type: 'SET_SAVE_SUCCESS', payload: false });
+      }, 3000);
+      
     } catch (error) {
       handleError(error);
     } finally {
@@ -138,7 +176,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const resetSettings = await settingsService.resetAppSettings();
-      dispatch({ type: 'SET_APP_SETTINGS', payload: resetSettings });
+      dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: resetSettings });
     } catch (error) {
       handleError(error);
     } finally {
@@ -150,12 +188,17 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const resetSettings = await settingsService.resetLLMSettings();
-      dispatch({ type: 'SET_LLM_SETTINGS', payload: resetSettings });
+      dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: resetSettings });
     } catch (error) {
       handleError(error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  const discardChanges = () => {
+    dispatch({ type: 'SET_APP_SETTINGS', payload: settings.savedAppSettings });
+    dispatch({ type: 'SET_LLM_SETTINGS', payload: settings.savedLLMSettings });
   };
 
   // Load settings on mount
@@ -167,11 +210,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     <SettingsContext.Provider value={{ 
       settings, 
       dispatch, 
-      updateAppSettings,
-      updateLLMSettings,
+      saveAllSettings,
       resetAppSettings,
       resetLLMSettings,
-      loadSettings
+      loadSettings,
+      discardChanges
     }}>
       {children}
     </SettingsContext.Provider>

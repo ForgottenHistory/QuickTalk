@@ -2,14 +2,20 @@ import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
 
 const AppSettingsTab: React.FC = () => {
-  const { settings, updateAppSettings, resetAppSettings } = useSettingsContext();
+  const { settings, dispatch, resetAppSettings } = useSettingsContext();
 
-  const handleAppSettingChange = async (key: string, value: any) => {
-    await updateAppSettings({ [key]: value });
+  const handleAppSettingChange = (key: string, value: any) => {
+    dispatch({ 
+      type: 'UPDATE_APP_SETTINGS_LOCAL', 
+      payload: { [key]: value } 
+    });
   };
 
   const handleReset = async () => {
-    await resetAppSettings();
+    const confirmReset = window.confirm('Are you sure you want to reset app settings to defaults?');
+    if (confirmReset) {
+      await resetAppSettings();
+    }
   };
 
   const settingStyle = {
@@ -32,8 +38,7 @@ const AppSettingsTab: React.FC = () => {
     backgroundColor: '#000000',
     color: '#ffffff',
     fontSize: '14px',
-    outline: 'none',
-    opacity: settings.isLoading ? 0.6 : 1
+    outline: 'none'
   };
 
   const checkboxContainerStyle = {
@@ -41,20 +46,6 @@ const AppSettingsTab: React.FC = () => {
     alignItems: 'center',
     gap: '12px'
   };
-
-  if (settings.error) {
-    return (
-      <div style={{
-        backgroundColor: '#ff4444',
-        color: '#ffffff',
-        padding: '16px',
-        borderRadius: '8px',
-        marginBottom: '20px'
-      }}>
-        Error: {settings.error}
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -65,16 +56,6 @@ const AppSettingsTab: React.FC = () => {
       }}>
         Application Settings
       </h3>
-
-      {settings.isLoading && (
-        <div style={{
-          color: '#ffd900',
-          marginBottom: '16px',
-          fontSize: '14px'
-        }}>
-          ⏳ Saving settings...
-        </div>
-      )}
 
       {/* Session Duration */}
       <div style={settingStyle}>
@@ -87,7 +68,6 @@ const AppSettingsTab: React.FC = () => {
           max="60"
           value={settings.appSettings.sessionDuration}
           onChange={(e) => handleAppSettingChange('sessionDuration', parseInt(e.target.value))}
-          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -106,7 +86,6 @@ const AppSettingsTab: React.FC = () => {
           max="30"
           value={settings.appSettings.extensionDuration}
           onChange={(e) => handleAppSettingChange('extensionDuration', parseInt(e.target.value))}
-          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -125,7 +104,6 @@ const AppSettingsTab: React.FC = () => {
           max="5"
           value={settings.appSettings.extensionWarningTime}
           onChange={(e) => handleAppSettingChange('extensionWarningTime', parseInt(e.target.value))}
-          disabled={settings.isLoading}
           style={inputStyle}
         />
         <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
@@ -141,7 +119,6 @@ const AppSettingsTab: React.FC = () => {
             id="autoConnect"
             checked={settings.appSettings.autoConnect}
             onChange={(e) => handleAppSettingChange('autoConnect', e.target.checked)}
-            disabled={settings.isLoading}
             style={{
               width: '20px',
               height: '20px',
@@ -169,7 +146,6 @@ const AppSettingsTab: React.FC = () => {
             id="soundEnabled"
             checked={settings.appSettings.soundEnabled}
             onChange={(e) => handleAppSettingChange('soundEnabled', e.target.checked)}
-            disabled={settings.isLoading}
             style={{
               width: '20px',
               height: '20px',
@@ -210,8 +186,11 @@ const AppSettingsTab: React.FC = () => {
             opacity: settings.isLoading ? 0.6 : 1
           }}
         >
-          🔄 Reset to Defaults
+          {settings.isLoading ? '⏳ Resetting...' : '🔄 Reset to Defaults'}
         </button>
+        <small style={{ color: '#ffec3d', fontSize: '12px', marginTop: '8px', display: 'block' }}>
+          This will immediately reset and save the app settings
+        </small>
       </div>
     </div>
   );
