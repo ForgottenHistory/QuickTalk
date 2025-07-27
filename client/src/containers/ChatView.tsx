@@ -5,6 +5,7 @@ import ChatHeader from '../components/ChatHeader';
 import ChatMessages from '../components/ChatMessages';
 import ChatInput from '../components/ChatInput';
 import ExtensionModal from '../components/ExtensionModal';
+import SettingsPanel from '../components/SettingsPanel';
 
 interface ChatViewProps {
   onSendMessage: (text: string) => void;
@@ -45,6 +46,8 @@ const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
         aiWantsExtension={state.extensionState.aiDecision === 'extend'}
         userDecision={state.extensionState.userDecision}
       />
+      
+      <SettingsPanel />
     </div>
   );
 };

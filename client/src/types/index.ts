@@ -44,3 +44,26 @@ export interface TypingEvent {
   isTyping: boolean;
   sender: 'user' | 'ai';
 }
+
+export interface AppSettings {
+  sessionDuration: number; // minutes
+  extensionDuration: number; // minutes
+  extensionWarningTime: number; // minutes before end to show warning
+  autoConnect: boolean;
+  soundEnabled: boolean;
+}
+
+export interface LLMSettings {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  systemPromptCustomization: boolean;
+  responseLength: 'short' | 'medium' | 'long';
+}
+
+export interface SettingsState {
+  isOpen: boolean;
+  activeTab: 'app' | 'llm';
+  appSettings: AppSettings;
+  llmSettings: LLMSettings;
+}

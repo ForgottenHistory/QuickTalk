@@ -1,5 +1,6 @@
 import React from 'react';
 import { AICharacter, Timer as TimerType } from '../types';
+import { useSettingsContext } from '../context/SettingsContext';
 import Timer from './Timer';
 
 interface ChatHeaderProps {
@@ -9,6 +10,24 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ aiCharacter, timer, onExit }) => {
+  const { dispatch } = useSettingsContext();
+
+  const handleSettingsClick = () => {
+    dispatch({ type: 'TOGGLE_SETTINGS' });
+  };
+
+  const buttonStyle = {
+    padding: '8px 16px',
+    borderRadius: '20px',
+    border: '2px solid #ffd900',
+    backgroundColor: 'transparent',
+    color: '#ffd900',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '12px',
+    transition: 'all 0.2s ease'
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -46,22 +65,27 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ aiCharacter, timer, onExit }) =
         </div>
       </div>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <Timer timer={timer} />
         
         <button
-          onClick={onExit}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '20px',
-            border: '2px solid #ffd900',
-            backgroundColor: 'transparent',
-            color: '#ffd900',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '12px',
-            transition: 'all 0.2s ease'
+          onClick={handleSettingsClick}
+          style={buttonStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#ffd900';
+            e.currentTarget.style.color = '#000000';
           }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#ffd900';
+          }}
+        >
+          ⚙️ Settings
+        </button>
+        
+        <button
+          onClick={onExit}
+          style={buttonStyle}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#ffd900';
             e.currentTarget.style.color = '#000000';
