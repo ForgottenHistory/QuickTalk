@@ -2,30 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { AICharacter } from '../types';
 
 interface ConnectingScreenProps {
-  onConnected: (newAI: AICharacter) => void;
   newAI: AICharacter;
 }
 
-const ConnectingScreen: React.FC<ConnectingScreenProps> = ({ onConnected, newAI }) => {
+const ConnectingScreen: React.FC<ConnectingScreenProps> = ({ newAI }) => {
   const [dots, setDots] = useState('');
 
   useEffect(() => {
-    console.log('ConnectingScreen mounted for:', newAI.name); // Debug log
+    console.log('ConnectingScreen mounted for:', newAI.name);
     
     const interval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 500);
 
-    const timeout = setTimeout(() => {
-      console.log('Calling onConnected for:', newAI.name); // Debug log
-      onConnected(newAI);
-    }, 3000);
-
     return () => {
       clearInterval(interval);
-      clearTimeout(timeout);
     };
-  }, [onConnected, newAI]);
+  }, [newAI]);
 
   return (
     <div style={{
