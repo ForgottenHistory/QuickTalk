@@ -13,28 +13,8 @@ const Timer: React.FC<TimerProps> = ({ timer }) => {
   const isLowTime = timer.minutes < 3;
 
   return (
-    <div style={{
-      backgroundColor: isLowTime ? '#ffd900' : '#212121',
-      color: isLowTime ? '#000000' : '#ffffff',
-      padding: '8px 16px',
-      borderRadius: '20px',
-      fontWeight: 'bold',
-      fontSize: '18px',
-      minWidth: '70px',
-      textAlign: 'center',
-      transition: 'all 0.3s ease',
-      animation: isLowTime ? 'pulse 1s infinite' : 'none'
-    }}>
+    <div className={`timer ${isLowTime ? 'timer-warning' : ''}`}>
       {formatTime(timer.minutes, timer.seconds)}
-      <style>
-        {`
-          @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-          }
-        `}
-      </style>
     </div>
   );
 };

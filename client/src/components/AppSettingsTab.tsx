@@ -32,9 +32,7 @@ const AppSettingsTab: React.FC = () => {
 
   return (
     <div>
-      <h3 style={{ color: '#ffd900', marginBottom: '24px', fontSize: '20px' }}>
-        Application Settings
-      </h3>
+      <h3 className="section-title">Application Settings</h3>
 
       <SettingField
         label="⏱️ Default Session Duration (minutes)"

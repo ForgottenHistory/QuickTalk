@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from './shared';
 
 interface SettingFieldProps {
   label?: string;
@@ -13,11 +14,11 @@ export const SettingField: React.FC<SettingFieldProps> = ({
   children, 
   className = '' 
 }) => (
-  <div className={`setting-field ${className}`}>
-    {label && <label className="setting-label">{label}</label>}
+  <div className={`form-group ${className}`}>
+    {label && <label className="form-label">{label}</label>}
     {children}
     {description && (
-      <small className="setting-description">{description}</small>
+      <small className="form-description">{description}</small>
     )}
   </div>
 );
@@ -40,7 +41,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     step={step}
     value={value}
     onChange={(e) => onChange(parseInt(e.target.value))}
-    className="setting-input"
+    className="form-input"
   />
 );
 
@@ -56,7 +57,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
   <select
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className="setting-input setting-select"
+    className="form-input form-select"
   >
     {options.map(option => (
       <option key={option.value} value={option.value}>
@@ -76,13 +77,13 @@ interface CheckboxInputProps {
 export const CheckboxInput: React.FC<CheckboxInputProps> = ({
   checked, onChange, label, id
 }) => (
-  <div className="checkbox-container">
+  <div className="checkbox-group">
     <input
       type="checkbox"
       id={id}
       checked={checked}
       onChange={(e) => onChange(e.target.checked)}
-      className="setting-checkbox"
+      className="form-checkbox"
     />
     <label htmlFor={id} className="checkbox-label">{label}</label>
   </div>
@@ -109,7 +110,7 @@ export const RangeInput: React.FC<RangeInputProps> = ({
       step={step}
       value={value}
       onChange={(e) => onChange(parseFloat(e.target.value))}
-      className="setting-range"
+      className="form-range"
     />
     <div className="range-labels">
       <span>{minLabel}</span>
@@ -124,14 +125,14 @@ export const ResetButton: React.FC<{
   type: string;
 }> = ({ onClick, loading, type }) => (
   <div className="reset-section">
-    <button
+    <Button
       onClick={onClick}
       disabled={loading}
-      className="reset-button"
+      variant="secondary"
     >
       {loading ? '⏳ Resetting...' : `🔄 Reset ${type} to Defaults`}
-    </button>
-    <small className="setting-description">
+    </Button>
+    <small className="form-description">
       This will immediately reset and save the {type.toLowerCase()} settings
     </small>
   </div>

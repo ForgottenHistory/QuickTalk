@@ -455,3 +455,212 @@
   display: flex;
   gap: 12px;
 }
+
+/* Timer Styles */
+.timer {
+  background-color: var(--color-gray);
+  color: var(--color-white);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 18px;
+  min-width: 70px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.timer-warning {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Typing Indicator Styles */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-yellow);
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.typing-text {
+  font-size: 12px;
+  color: var(--color-yellow-light);
+  font-style: italic;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Settings Panel Enhancements */
+.settings-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-message {
+  padding: 12px 20px;
+  font-size: 14px;
+}
+
+.status-message.warning {
+  background-color: #ff8800;
+  color: var(--color-white);
+}
+
+.status-message.error {
+  background-color: #ff4444;
+  color: var(--color-white);
+}
+
+.status-message.success {
+  background-color: #44ff44;
+  color: var(--color-black);
+  font-weight: bold;
+}
+
+/* Form Elements for Settings */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
+  display: block;
+  color: var(--color-white);
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid var(--color-yellow);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-size: 14px;
+  outline: none;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.form-select option {
+  background-color: var(--color-black);
+}
+
+.form-description {
+  color: var(--color-yellow-light);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-yellow);
+}
+
+.checkbox-label {
+  color: var(--color-white);
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+  cursor: pointer;
+}
+
+.form-range {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-black);
+  outline: none;
+  accent-color: var(--color-yellow);
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-yellow-light);
+  margin-top: 4px;
+}
+
+.reset-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-yellow);
+}
+
+.performance-info {
+  background-color: var(--color-black);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-yellow);
+  margin-bottom: 24px;
+}
+
+.performance-info h4 {
+  color: var(--color-yellow);
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.performance-info ul {
+  color: var(--color-yellow-light);
+  font-size: 12px;
+  margin: 0;
+  padding-left: 16px;
+}
+
+.section-title {
+  color: var(--color-yellow);
+  margin-bottom: 24px;
+  font-size: 20px;
+}
