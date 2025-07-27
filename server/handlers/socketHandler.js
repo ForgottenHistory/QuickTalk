@@ -22,6 +22,18 @@ const socketHandler = (io) => {
       await messageHandler.handleMessage(io, socket, sessionId, message);
     });
     
+    // NEW: Handle typing status
+    socket.on('typing-status', ({ sessionId, isTyping, sender }) => {
+      const session = sessionManager.getSession(sessionId);
+      if (session) {
+        // Broadcast typing status to other participants in the session
+        socket.to(sessionId).emit('typing-update', { 
+          isTyping, 
+          sender 
+        });
+      }
+    });
+    
     socket.on('extend-session', async ({ sessionId, decision }) => {
       await extensionHandler.handleExtension(socket, sessionId, decision);
     });

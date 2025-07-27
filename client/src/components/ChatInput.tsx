@@ -1,4 +1,5 @@
-import React, { useState, KeyboardEvent } from 'react';
+import React, { useState, KeyboardEvent, ChangeEvent } from 'react';
+import { useTypingManagement } from '../hooks/useTypingManagement';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -7,10 +8,12 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }) => {
   const [message, setMessage] = useState('');
+  const { handleUserTyping, stopUserTyping } = useTypingManagement();
 
   const handleSend = () => {
     console.log('ChatInput handleSend:', message, typeof message, message.trim());
     if (message.trim() && !disabled) {
+      stopUserTyping(); // Stop typing indicator when sending
       onSendMessage(message.trim());
       setMessage('');
     }
@@ -21,6 +24,20 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+    
+    // Trigger typing indicator if not disabled and has content
+    if (!disabled && e.target.value.length > 0) {
+      handleUserTyping();
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Stop typing when input loses focus
+    stopUserTyping();
   };
 
   return (
@@ -37,8 +54,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }
         <input
           type="text"
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleInputChange}
           onKeyPress={handleKeyPress}
+          onBlur={handleInputBlur}
           placeholder={disabled ? "Session ended" : "Type your message..."}
           disabled={disabled}
           style={{

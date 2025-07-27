@@ -19,7 +19,13 @@ const handleMessage = async (io, socket, sessionId, message) => {
   sessionManager.addMessage(sessionId, userMessage);
   io.to(sessionId).emit('new-message', userMessage);
   
-  // Generate AI response after delay
+  // Show AI typing indicator immediately
+  io.to(sessionId).emit('typing-update', { 
+    isTyping: true, 
+    sender: 'ai' 
+  });
+  
+  // Generate AI response with realistic delay
   setTimeout(async () => {
     try {
       const aiResponseText = await aiService.generateResponse(
@@ -27,6 +33,12 @@ const handleMessage = async (io, socket, sessionId, message) => {
         message, 
         session.messages
       );
+      
+      // Stop typing indicator
+      io.to(sessionId).emit('typing-update', { 
+        isTyping: false, 
+        sender: 'ai' 
+      });
       
       const aiResponse = {
         id: uuidv4(),
@@ -39,6 +51,13 @@ const handleMessage = async (io, socket, sessionId, message) => {
       io.to(sessionId).emit('new-message', aiResponse);
     } catch (error) {
       console.error('Error generating AI response:', error);
+      
+      // Stop typing indicator on error
+      io.to(sessionId).emit('typing-update', { 
+        isTyping: false, 
+        sender: 'ai' 
+      });
+      
       const errorResponse = {
         id: uuidv4(),
         text: "I'm having trouble responding right now. Could you try again?",
@@ -49,7 +68,7 @@ const handleMessage = async (io, socket, sessionId, message) => {
       sessionManager.addMessage(sessionId, errorResponse);
       io.to(sessionId).emit('new-message', errorResponse);
     }
-  }, 1500);
+  }, Math.random() * 2000 + 1500); // Random delay between 1.5-3.5 seconds
 };
 
 module.exports = {

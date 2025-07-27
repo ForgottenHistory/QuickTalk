@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { AICharacter, Timer, Message, ExtensionState } from '../types';
+import { AICharacter, Timer, Message, ExtensionState, TypingState } from '../types';
 
 interface AppState {
   // Connection state
@@ -19,6 +19,9 @@ interface AppState {
   
   // Extension state
   extensionState: ExtensionState;
+  
+  // Typing state
+  typingState: TypingState;
 }
 
 type AppAction = 
@@ -33,6 +36,8 @@ type AppAction =
   | { type: 'ADD_MESSAGE'; payload: Message }
   | { type: 'SET_EXTENSION_STATE'; payload: ExtensionState }
   | { type: 'UPDATE_EXTENSION_STATE'; payload: Partial<ExtensionState> }
+  | { type: 'SET_TYPING_STATE'; payload: TypingState }
+  | { type: 'UPDATE_TYPING_STATE'; payload: Partial<TypingState> }
   | { type: 'RESET_SESSION' };
 
 const initialState: AppState = {
@@ -52,6 +57,10 @@ const initialState: AppState = {
     userDecision: null,
     aiDecision: null,
     hasBeenOffered: false
+  },
+  typingState: {
+    isAITyping: false,
+    isUserTyping: false
   }
 };
 
@@ -79,6 +88,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, extensionState: action.payload };
     case 'UPDATE_EXTENSION_STATE':
       return { ...state, extensionState: { ...state.extensionState, ...action.payload } };
+    case 'SET_TYPING_STATE':
+      return { ...state, typingState: action.payload };
+    case 'UPDATE_TYPING_STATE':
+      return { ...state, typingState: { ...state.typingState, ...action.payload } };
     case 'RESET_SESSION':
       return {
         ...state,
@@ -90,6 +103,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           userDecision: null,
           aiDecision: null,
           hasBeenOffered: false
+        },
+        typingState: {
+          isAITyping: false,
+          isUserTyping: false
         }
       };
     default:

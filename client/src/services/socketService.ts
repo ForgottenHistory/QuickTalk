@@ -15,6 +15,11 @@ export interface ExtensionResponse {
   success: boolean;
 }
 
+export interface TypingData {
+  isTyping: boolean;
+  sender: 'user' | 'ai';
+}
+
 class SocketService {
   private socket: Socket | null = null;
   private serverUrl = 'http://localhost:5000';
@@ -52,6 +57,19 @@ class SocketService {
     console.log('Socket service sending:', { sessionId, message, messageType: typeof message });
     if (this.socket) {
       this.socket.emit('send-message', { sessionId, message });
+    }
+  }
+
+  // NEW: Typing indicator methods
+  sendTypingStatus(sessionId: string, isTyping: boolean) {
+    if (this.socket) {
+      this.socket.emit('typing-status', { sessionId, isTyping, sender: 'user' });
+    }
+  }
+
+  onTypingUpdate(callback: (data: TypingData) => void) {
+    if (this.socket) {
+      this.socket.on('typing-update', callback);
     }
   }
 

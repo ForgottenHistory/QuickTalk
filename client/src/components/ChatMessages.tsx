@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Message as MessageType } from '../types';
 import Message from './Message';
+import TypingIndicator from './TypingIndicator';
 
 interface ChatMessagesProps {
   messages: MessageType[];
@@ -38,9 +39,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages }) => {
           Start your conversation...
         </div>
       ) : (
-        messages.map((message) => (
-          <Message key={message.id} message={message} />
-        ))
+        <>
+          {messages.map((message) => (
+            <Message key={message.id} message={message} />
+          ))}
+          <TypingIndicator />
+        </>
       )}
       <div ref={messagesEndRef} />
     </div>

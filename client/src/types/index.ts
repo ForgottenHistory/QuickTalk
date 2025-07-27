@@ -33,3 +33,14 @@ export interface ExtensionState {
   aiDecision: 'extend' | 'decline' | null;
   hasBeenOffered: boolean;
 }
+
+export interface TypingState {
+  isAITyping: boolean;
+  isUserTyping: boolean;
+}
+
+export interface TypingEvent {
+  sessionId: string;
+  isTyping: boolean;
+  sender: 'user' | 'ai';
+}
