@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSettingsContext } from '../context/SettingsContext';
 
 interface ExtensionModalProps {
   isVisible: boolean;
@@ -15,11 +16,15 @@ const ExtensionModal: React.FC<ExtensionModalProps> = ({
   aiWantsExtension,
   userDecision 
 }) => {
+  const { settings } = useSettingsContext();
+  
   if (!isVisible) return null;
+
+  const extensionDuration = settings.appSettings.extensionDuration;
 
   const getStatusText = () => {
     if (userDecision === 'extend' && aiWantsExtension) {
-      return "🎉 Both parties want to extend! Adding 15 minutes...";
+      return `🎉 Both parties want to extend! Adding ${extensionDuration} minutes...`;
     } else if (userDecision === 'extend' && !aiWantsExtension) {
       return "😔 Sorry, the AI doesn't want to continue. Connecting to new AI...";
     } else if (userDecision === 'decline') {
@@ -78,7 +83,7 @@ const ExtensionModal: React.FC<ExtensionModalProps> = ({
               color: '#ffffff',
               marginBottom: '8px'
             }}>
-              Would you like to extend this conversation by 15 minutes?
+              Would you like to extend this conversation by {extensionDuration} minutes?
             </div>
             
             <div style={{

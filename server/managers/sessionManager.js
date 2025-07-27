@@ -1,3 +1,5 @@
+const settingsManager = require('./settingsManager');
+
 // In-memory storage (replace with database later)
 const activeSessions = new Map();
 
@@ -22,7 +24,9 @@ const addMessage = (sessionId, message) => {
 const extendSession = (sessionId) => {
   const session = activeSessions.get(sessionId);
   if (session) {
-    session.timeRemaining = 15 * 60; // Reset to 15 minutes
+    // Use settings for extension duration
+    const extensionDuration = settingsManager.getExtensionDuration();
+    session.timeRemaining = extensionDuration * 60; // Convert minutes to seconds
     return true;
   }
   return false;

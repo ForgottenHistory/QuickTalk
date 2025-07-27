@@ -1,13 +1,20 @@
 import { useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
+import { useSettingsContext } from '../context/SettingsContext';
 import { socketService, SessionData, ExtensionResponse } from '../services/socketService';
 import { apiService } from '../services/apiService';
 import { Message } from '../types';
 
 export const useAppInitialization = () => {
   const { state, dispatch } = useAppContext();
+  const { settings } = useSettingsContext();
 
   useEffect(() => {
+    // Don't initialize if settings are still loading or already connected
+    if (settings.isLoading || state.isConnected || state.sessionId) {
+      return;
+    }
+
     const initializeApp = async () => {
       try {
         console.log('Connecting to server...');
@@ -15,7 +22,8 @@ export const useAppInitialization = () => {
         dispatch({ type: 'SET_CONNECTED', payload: true });
 
         console.log('Creating new session...');
-        const { sessionId: newSessionId, aiCharacter: newAI } = await apiService.createSession();
+        const response = await apiService.createSession();
+        const { sessionId: newSessionId, aiCharacter: newAI, sessionDuration } = response;
         
         dispatch({ type: 'SET_SESSION_ID', payload: newSessionId });
         dispatch({ type: 'SET_AI_CHARACTER', payload: newAI });
@@ -26,9 +34,11 @@ export const useAppInitialization = () => {
         // Setup socket listeners
         setupSocketListeners();
         
+        // Use session duration from backend (which uses settings)
+        const duration = sessionDuration || settings.appSettings.sessionDuration;
         dispatch({ 
           type: 'SET_TIMER', 
-          payload: { minutes: 15, seconds: 0, isActive: true } 
+          payload: { minutes: duration, seconds: 0, isActive: true } 
         });
         
         dispatch({ type: 'SET_CONNECTING', payload: false });
@@ -70,8 +80,9 @@ export const useAppInitialization = () => {
 
     initializeApp();
 
+    // Cleanup only on unmount
     return () => {
       socketService.disconnect();
     };
-  }, [dispatch]);
+  }, [settings.isLoading]); // Only depend on loading state
 };

@@ -5,6 +5,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
 export interface CreateSessionResponse {
   sessionId: string;
   aiCharacter: AICharacter;
+  sessionDuration: number;
 }
 
 export interface SessionResponse {
