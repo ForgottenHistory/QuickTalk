@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useSessionHandling } from '../hooks/useSessionHandling';
-import ChatHeader from '../components/ChatHeader';
-import ChatMessages from '../components/ChatMessages';
-import ChatInput from '../components/ChatInput';
-import ExtensionModal from '../components/ExtensionModal';
-import SettingsPanel from '../components/SettingsPanel';
+import { Container } from './shared';
+import ChatHeader from './ChatHeader';
+import ChatMessages from './ChatMessages';
+import ChatInput from './ChatInput';
+import ExtensionModal from './ExtensionModal';
+import SettingsPanel from './SettingsPanel';
 
 interface ChatViewProps {
   onSendMessage: (text: string) => void;
@@ -20,12 +21,7 @@ const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
   }
 
   return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: '#000000'
-    }}>
+    <Container variant="chat">
       <ChatHeader 
         aiCharacter={state.aiCharacter} 
         timer={state.timer} 
@@ -48,7 +44,7 @@ const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
       />
       
       <SettingsPanel />
-    </div>
+    </Container>
   );
 };
 

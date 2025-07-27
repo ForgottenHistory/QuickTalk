@@ -5,7 +5,7 @@ import { useTimerManagement } from '../hooks/useTimerManagement';
 import { useExtensionManagement } from '../hooks/useExtensionManagement';
 import { useMessageHandling } from '../hooks/useMessageHandling';
 import { useTypingManagement } from '../hooks/useTypingManagement';
-import ChatView from './ChatView';
+import ChatView from '../components/ChatView';
 import ConnectingScreen from '../components/ConnectingScreen';
 
 const AppContainer: React.FC = () => {
