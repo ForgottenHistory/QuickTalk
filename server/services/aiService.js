@@ -41,12 +41,10 @@ class AIService {
     try {
       const systemPrompt = this.getCharacterSystemPrompt(character);
       
-      // Build messages array with system prompt and conversation history
       const messages = [
         { role: 'system', content: systemPrompt }
       ];
 
-      // Add recent conversation history (last 6 messages to stay within context)
       const recentHistory = conversationHistory.slice(-6);
       recentHistory.forEach(msg => {
         messages.push({
@@ -55,7 +53,6 @@ class AIService {
         });
       });
 
-      // Add current user message
       messages.push({ role: 'user', content: userMessage });
 
       console.log('Sending request to AI with messages:', messages.length);
@@ -67,11 +64,8 @@ class AIService {
         messages: messages,
       });
 
-      console.log('Full AI response:', JSON.stringify(chatCompletion, null, 2));
       const response = chatCompletion.choices[0]?.message?.content;
-      console.log('AI Response received:', typeof response, response);
 
-      // Ensure we always return a string
       if (typeof response === 'string' && response.trim()) {
         return response.trim();
       } else {
@@ -80,12 +74,10 @@ class AIService {
       }
     } catch (error) {
       console.error('AI Service Error:', error.message);
-      console.error('Error details:', error);
       return "I'm experiencing some technical difficulties. Please try again in a moment.";
     }
   }
 
-  // Generate AI decision for session extension
   async generateExtensionDecision(character, conversationHistory = []) {
     try {
       const systemPrompt = `You are ${character.name}, an AI character with this personality: ${character.personality}. 
@@ -97,7 +89,6 @@ class AIService {
         { role: 'system', content: systemPrompt }
       ];
 
-      // Add conversation context
       const recentHistory = conversationHistory.slice(-4);
       if (recentHistory.length > 0) {
         const conversationSummary = recentHistory.map(msg => 
@@ -125,7 +116,6 @@ class AIService {
       return decision === 'extend' ? 'extend' : 'decline';
     } catch (error) {
       console.error('AI Extension Decision Error:', error);
-      // Default to random decision if AI call fails
       return Math.random() > 0.3 ? 'extend' : 'decline';
     }
   }
