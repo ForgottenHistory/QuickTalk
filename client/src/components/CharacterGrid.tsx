@@ -11,59 +11,58 @@ interface CharacterCardProps {
 }
 
 const CharacterCard: React.FC<CharacterCardProps> = ({ 
-  character, 
-  onEdit, 
-  onDelete, 
-  onSelect 
+  character, onEdit, onDelete, onSelect 
 }) => {
+  const { data } = character;
+  
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString();
   };
 
+  const renderAvatar = () => {
+    return data.avatar.startsWith('data:') ? (
+      <img 
+        src={data.avatar} 
+        alt={data.name}
+        className="character-card-avatar-image"
+      />
+    ) : (
+      <Avatar emoji={data.avatar} size="large" />
+    );
+  };
+
+  const metaItems = [
+    { label: 'Version', value: data.character_version },
+    ...(data.creator ? [{ label: 'Creator', value: data.creator }] : []),
+    { label: 'Updated', value: formatDate(data.updated_at) }
+  ];
+
   return (
     <div className="character-card">
       <div className="character-card-header">
-        {character.data.avatar.startsWith('data:') ? (
-          <img 
-            src={character.data.avatar} 
-            alt={character.data.name}
-            className="character-card-avatar-image"
-          />
-        ) : (
-          <Avatar emoji={character.data.avatar} size="large" />
-        )}
+        {renderAvatar()}
         <div className="character-card-info">
-          <h3 className="character-card-name">{character.data.name}</h3>
-          <p className="character-card-description">{character.data.description}</p>
+          <h3 className="character-card-name">{data.name}</h3>
+          <p className="character-card-description">{data.description}</p>
         </div>
       </div>
 
       <div className="character-card-body">
-        {character.data.tags.length > 0 && (
+        {data.tags.length > 0 && (
           <div className="character-tags">
-            {character.data.tags.map((tag, index) => (
-              <span key={index} className="character-tag">
-                {tag}
-              </span>
+            {data.tags.map((tag, index) => (
+              <span key={index} className="character-tag">{tag}</span>
             ))}
           </div>
         )}
 
         <div className="character-meta">
-          <div className="character-meta-item">
-            <span className="character-meta-label">Version:</span>
-            <span className="character-meta-value">{character.data.character_version}</span>
-          </div>
-          {character.data.creator && (
-            <div className="character-meta-item">
-              <span className="character-meta-label">Creator:</span>
-              <span className="character-meta-value">{character.data.creator}</span>
+          {metaItems.map((item, index) => (
+            <div key={index} className="character-meta-item">
+              <span className="character-meta-label">{item.label}:</span>
+              <span className="character-meta-value">{item.value}</span>
             </div>
-          )}
-          <div className="character-meta-item">
-            <span className="character-meta-label">Updated:</span>
-            <span className="character-meta-value">{formatDate(character.data.updated_at)}</span>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -74,7 +73,11 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         <Button onClick={onEdit} variant="secondary" className="character-action-btn">
           ✏️ Edit
         </Button>
-        <Button onClick={onDelete} variant="secondary" className="character-action-btn character-delete-btn">
+        <Button 
+          onClick={onDelete} 
+          variant="secondary" 
+          className="character-action-btn character-delete-btn"
+        >
           🗑️ Delete
         </Button>
       </div>
@@ -82,8 +85,40 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
   );
 };
 
+interface EmptyStateProps {
+  hasFilters: boolean;
+  onClearFilters: () => void;
+  onCreateCharacter: () => void;
+}
+
+const EmptyState: React.FC<EmptyStateProps> = ({ 
+  hasFilters, onClearFilters, onCreateCharacter 
+}) => (
+  <div className="character-grid-empty">
+    {hasFilters ? (
+      <>
+        <div className="empty-state-icon">🔍</div>
+        <h3>No characters found</h3>
+        <p>Try adjusting your search criteria or filters.</p>
+        <Button onClick={onClearFilters} variant="secondary">
+          Clear Filters
+        </Button>
+      </>
+    ) : (
+      <>
+        <div className="empty-state-icon">👥</div>
+        <h3>No characters yet</h3>
+        <p>Create your first character to get started!</p>
+        <Button onClick={onCreateCharacter} variant="primary">
+          Create Character
+        </Button>
+      </>
+    )}
+  </div>
+);
+
 const CharacterGrid: React.FC = () => {
-  const { state, dispatch, deleteCharacter, paginatedCharacters, totalPages } = useCharacterContext();
+  const { state, dispatch, deleteCharacter, paginatedCharacters } = useCharacterContext();
 
   const handleEdit = (character: CharacterCardV2) => {
     dispatch({ type: 'START_EDITING', payload: character });
@@ -108,35 +143,15 @@ const CharacterGrid: React.FC = () => {
     dispatch({ type: 'SET_MANAGEMENT_OPEN', payload: false });
   };
 
+  const hasFilters = Boolean(state.searchQuery || state.selectedTags.length > 0);
+
   if (paginatedCharacters.length === 0) {
     return (
-      <div className="character-grid-empty">
-        {state.searchQuery || state.selectedTags.length > 0 ? (
-          <>
-            <div className="empty-state-icon">🔍</div>
-            <h3>No characters found</h3>
-            <p>Try adjusting your search criteria or filters.</p>
-            <Button 
-              onClick={() => dispatch({ type: 'CLEAR_FILTERS' })}
-              variant="secondary"
-            >
-              Clear Filters
-            </Button>
-          </>
-        ) : (
-          <>
-            <div className="empty-state-icon">👥</div>
-            <h3>No characters yet</h3>
-            <p>Create your first character to get started!</p>
-            <Button 
-              onClick={() => dispatch({ type: 'START_EDITING', payload: null })}
-              variant="primary"
-            >
-              Create Character
-            </Button>
-          </>
-        )}
-      </div>
+      <EmptyState
+        hasFilters={hasFilters}
+        onClearFilters={() => dispatch({ type: 'CLEAR_FILTERS' })}
+        onCreateCharacter={() => dispatch({ type: 'START_EDITING', payload: null })}
+      />
     );
   }
 

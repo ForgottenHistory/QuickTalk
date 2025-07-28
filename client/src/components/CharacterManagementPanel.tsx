@@ -1,10 +1,64 @@
 import React from 'react';
 import { useCharacterContext } from '../context/CharacterContext';
-import { Modal, Button, LoadingSpinner } from './shared';
+import { Modal, Button, LoadingSpinner, Pagination } from './shared';
 import CharacterGrid from './CharacterGrid';
 import CharacterEditor from './CharacterEditor';
 import CharacterFilters from './CharacterFilters';
 import CharacterActions from './CharacterActions';
+
+interface PanelHeaderProps {
+  totalCharacters: number;
+  filteredCount: number;
+  onCreateNew: () => void;
+}
+
+const PanelHeader: React.FC<PanelHeaderProps> = ({ 
+  totalCharacters, filteredCount, onCreateNew 
+}) => (
+  <div className="character-management-header">
+    <div className="character-management-title-container">
+      <h2 className="character-management-title">📚 Character Management</h2>
+      <div className="character-count">
+        {filteredCount} of {totalCharacters} characters
+      </div>
+    </div>
+    <Button onClick={onCreateNew} variant="primary">
+      ➕ Create New Character
+    </Button>
+  </div>
+);
+
+interface StatusMessageProps {
+  error: string | null;
+}
+
+const StatusMessage: React.FC<StatusMessageProps> = ({ error }) => {
+  if (!error) return null;
+
+  return (
+    <div className={`status-message ${error.startsWith('✓') ? 'success' : 'error'}`}>
+      {error}
+    </div>
+  );
+};
+
+interface LoadingOverlayProps {
+  isVisible: boolean;
+}
+
+const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible }) => {
+  if (!isVisible) return null;
+
+  return (
+    <div className="character-loading-overlay">
+      <div className="character-loading-content">
+        <div className="loading-bar">
+          <div className="loading-progress" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CharacterManagementPanel: React.FC = () => {
   const { state, dispatch, filteredCharacters, totalPages } = useCharacterContext();
@@ -39,77 +93,33 @@ const CharacterManagementPanel: React.FC = () => {
 
   return (
     <Modal isVisible={true} onClose={handleClose} className="character-management-modal">
-      <div className="character-management-header">
-        <div className="character-management-title-container">
-          <h2 className="character-management-title">📚 Character Management</h2>
-          <div className="character-count">
-            {filteredCharacters.length} of {state.characters.length} characters
-          </div>
-        </div>
-        <Button onClick={handleCreateNew} variant="primary">
-          ➕ Create New Character
-        </Button>
-      </div>
+      <PanelHeader
+        totalCharacters={state.characters.length}
+        filteredCount={filteredCharacters.length}
+        onCreateNew={handleCreateNew}
+      />
 
-      {/* Error Display */}
-      {state.error && (
-        <div className={`status-message ${state.error.startsWith('✓') ? 'success' : 'error'}`}>
-          {state.error}
-        </div>
-      )}
+      <StatusMessage error={state.error} />
 
-      {/* Editor Modal */}
-      {state.isEditing && (
-        <CharacterEditor />
-      )}
+      {state.isEditing && <CharacterEditor />}
 
-      {/* Main Content */}
       <div className="character-management-content">
-        {/* Filters and Actions */}
         <div className="character-management-controls">
           <CharacterFilters />
           <CharacterActions />
         </div>
 
-        {/* Character Grid */}
         <CharacterGrid />
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="character-pagination">
-            <Button
-              onClick={() => dispatch({ type: 'SET_CURRENT_PAGE', payload: state.currentPage - 1 })}
-              disabled={state.currentPage === 1}
-              variant="secondary"
-            >
-              ← Previous
-            </Button>
-            
-            <span className="pagination-info">
-              Page {state.currentPage} of {totalPages}
-            </span>
-            
-            <Button
-              onClick={() => dispatch({ type: 'SET_CURRENT_PAGE', payload: state.currentPage + 1 })}
-              disabled={state.currentPage === totalPages}
-              variant="secondary"
-            >
-              Next →
-            </Button>
-          </div>
-        )}
+        <Pagination
+          currentPage={state.currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => dispatch({ type: 'SET_CURRENT_PAGE', payload: page })}
+          className="character-pagination"
+        />
       </div>
 
-      {/* Loading Overlay */}
-      {state.isLoading && (
-        <div className="character-loading-overlay">
-          <div className="character-loading-content">
-            <div className="loading-bar">
-              <div className="loading-progress" />
-            </div>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay isVisible={state.isLoading} />
     </Modal>
   );
 };

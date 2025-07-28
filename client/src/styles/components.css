@@ -681,6 +681,7 @@
   justify-content: space-between;
   align-items: center;
   background-color: var(--color-gray);
+  padding-right: 60px; /* Add space for the X button */
 }
 
 .character-management-title-container {
@@ -982,22 +983,6 @@
   padding: 0;
   margin-left: 4px;
   font-size: 10px;
-}
-
-/* Pagination */
-.character-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-top: 24px;
-  padding: 16px;
-}
-
-.pagination-info {
-  color: var(--color-white);
-  font-size: 14px;
-  font-weight: bold;
 }
 
 /* Loading Overlay */
@@ -1309,3 +1294,106 @@
     width: 100%;
   }
 }
+
+/* Form Components */
+.form-field {
+  margin-bottom: 20px;
+}
+
+.form-field-label {
+  display: block;
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.form-field-required {
+  color: var(--color-yellow);
+  margin-left: 4px;
+}
+
+.form-field-description {
+  color: var(--color-yellow-light);
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.form-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Tag Input */
+.tag-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tag-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-item {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: var(--color-black);
+  cursor: pointer;
+  padding: 0;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* File Upload */
+.file-upload {
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* Modal Footer */
+.modal-footer {
+  padding: 20px;
+  border-top: 2px solid var(--color-yellow);
+  background-color: var(--color-gray);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.pagination-info {
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: bold;
+}
+

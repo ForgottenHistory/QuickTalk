@@ -3,6 +3,22 @@ import { useCharacterContext } from '../context/CharacterContext';
 import { characterImageParser } from '../services/characterImageParser';
 import { Button } from './shared';
 
+interface ActionSectionProps {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}
+
+const ActionSection: React.FC<ActionSectionProps> = ({ title, description, children }) => (
+  <div className="character-actions-section">
+    <h4 className="character-actions-title">{title}</h4>
+    <div className="character-actions-buttons">
+      {children}
+    </div>
+    <p className="character-actions-description">{description}</p>
+  </div>
+);
+
 const CharacterActions: React.FC = () => {
   const { exportCharacters, importCharacters, createCharacter } = useCharacterContext();
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
@@ -58,17 +74,14 @@ const CharacterActions: React.FC = () => {
         console.log(`Processing file: ${file.name}`);
         
         try {
-          // Try primary extraction method
           let characterData = await characterImageParser.extractFromPNG(file);
           
-          // If that fails, try alternative method
           if (!characterData) {
             console.log('Primary method failed, trying alternative extraction...');
             characterData = await characterImageParser.extractFromPNGAlternative(file);
           }
           
           if (characterData) {
-            // Generate unique ID to avoid conflicts
             characterData.data.id = `imported_${Date.now()}_${i}`;
             importedCharacters.push(characterData);
             console.log(`Successfully extracted character: ${characterData.data.name}`);
@@ -85,7 +98,6 @@ const CharacterActions: React.FC = () => {
         return;
       }
 
-      // Create each character individually
       for (const character of importedCharacters) {
         await createCharacter(character.data);
       }
@@ -105,34 +117,26 @@ const CharacterActions: React.FC = () => {
 
   return (
     <div className="character-actions">
-      <div className="character-actions-section">
-        <h4 className="character-actions-title">📁 Import / Export</h4>
-        <div className="character-actions-buttons">
-          <Button onClick={handleExport} variant="secondary">
-            💾 Export JSON
-          </Button>
-          <Button onClick={handleImportJsonClick} variant="secondary">
-            📂 Import JSON
-          </Button>
-        </div>
-        <p className="character-actions-description">
-          Export your characters as a JSON file for backup or sharing. 
-          Import characters from a JSON file to restore or add new ones.
-        </p>
-      </div>
+      <ActionSection
+        title="📁 Import / Export"
+        description="Export your characters as a JSON file for backup or sharing. Import characters from a JSON file to restore or add new ones."
+      >
+        <Button onClick={handleExport} variant="secondary">
+          💾 Export JSON
+        </Button>
+        <Button onClick={handleImportJsonClick} variant="secondary">
+          📂 Import JSON
+        </Button>
+      </ActionSection>
 
-      <div className="character-actions-section">
-        <h4 className="character-actions-title">🖼️ Character Card Images</h4>
-        <div className="character-actions-buttons">
-          <Button onClick={handleImportPngClick} variant="secondary">
-            🖼️ Import PNG Cards
-          </Button>
-        </div>
-        <p className="character-actions-description">
-          Import Character Card V2 PNG images that contain embedded character data. 
-          You can select multiple PNG files at once.
-        </p>
-      </div>
+      <ActionSection
+        title="🖼️ Character Card Images"
+        description="Import Character Card V2 PNG images that contain embedded character data. You can select multiple PNG files at once."
+      >
+        <Button onClick={handleImportPngClick} variant="secondary">
+          🖼️ Import PNG Cards
+        </Button>
+      </ActionSection>
 
       {/* Hidden file inputs */}
       <input
