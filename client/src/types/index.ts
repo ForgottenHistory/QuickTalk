@@ -61,6 +61,7 @@ export interface LLMSettings {
   responseLength: 'short' | 'medium' | 'long';
   customSystemPrompt: string;
   authorsNote: string;
+  contextTemplate: string;
 }
 
 export interface SettingsState {
@@ -70,4 +71,4 @@ export interface SettingsState {
   llmSettings: LLMSettings;
 }
 
-export * from './character';
+export * from './character';  

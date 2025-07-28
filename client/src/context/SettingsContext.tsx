@@ -32,7 +32,24 @@ const defaultLLMSettings: LLMSettings = {
   systemPromptCustomization: false,
   responseLength: 'medium',
   customSystemPrompt: '',
-  authorsNote: ''
+  authorsNote: '',
+  contextTemplate: `{{#if system}}{{system}}
+
+# **Roleplay Context**
+{{/if}}{{#if description}}## {{char}}'s Description:
+{{description}}
+{{/if}}{{#if personality}}## {{char}}'s Personality:
+{{personality}}
+{{/if}}## User's Persona:
+A human conversing with AI characters.
+
+## Scenario:
+You are {{char}} engaging in a conversation with a human user.
+{{#if examples}}
+## {{char}}'s Example Response:
+{{examples}}
+{{/if}}
+### **End of Roleplay Context**`
 };
 
 interface ExtendedSettingsState extends SettingsState {

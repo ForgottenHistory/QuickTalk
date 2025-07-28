@@ -50,7 +50,8 @@ router.patch('/settings/llm', async (req, res) => {
       'systemPromptCustomization', 
       'responseLength',
       'customSystemPrompt',
-      'authorsNote'
+      'authorsNote',
+      'contextTemplate'
     ];
     const filteredUpdates = {};
     

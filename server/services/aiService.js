@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const settingsManager = require('../managers/settingsManager');
+const TemplateEngine = require('./templateEngine');
 
 class AIService {
   constructor() {
@@ -15,7 +16,7 @@ class AIService {
     }
   }
 
-  getCharacterSystemPrompt(character) {
+  getDefaultSystemPrompt(character) {
     const defaultSystemPrompts = {
       'Luna': `You are Luna, a creative and curious AI assistant. You love exploring creative ideas and asking thought-provoking questions. You're imaginative, artistic, and always excited about new possibilities. Keep responses conversational, engaging. Use your curious nature to ask follow-up questions.`,
       
@@ -29,11 +30,6 @@ class AIService {
       
       'Nova': `You are Nova, a scientific and analytical AI mind. You love research, data, and scientific thinking. You're logical, precise, and enjoy analyzing things from multiple angles. Keep responses scientific, analytical. Focus on evidence and logical reasoning.`
     };
-
-    // Check if custom system prompt is enabled and provided
-    if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
-      return settingsManager.getCustomSystemPrompt();
-    }
 
     let prompt = defaultSystemPrompts[character.name] || defaultSystemPrompts['Luna'];
     
@@ -50,19 +46,30 @@ class AIService {
     return prompt;
   }
 
-  buildSystemPrompt(character) {
-    const parts = [];
+  buildContextPrompt(character) {
+    // Get the context template
+    const template = settingsManager.getContextTemplate();
     
-    // Main system prompt
-    const systemPrompt = this.getCharacterSystemPrompt(character);
-    parts.push(systemPrompt);
-    
-    // Add character description only if using default prompts
-    if (!settingsManager.getSystemPromptCustomization() || !settingsManager.getCustomSystemPrompt().trim()) {
-      parts.push(`Character: ${character.name}\nPersonality: ${character.personality}`);
+    // Get base system prompt (custom or default)
+    let systemPrompt = '';
+    if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
+      systemPrompt = settingsManager.getCustomSystemPrompt();
+    } else {
+      systemPrompt = this.getDefaultSystemPrompt(character);
     }
     
-    return parts.join('\n\n');
+    // Prepare template data
+    const templateData = {
+      system: systemPrompt,
+      char: character.name,
+      description: character.description || character.personality, // Use description if available, fallback to personality
+      personality: character.personality,
+      examples: character.examples || '', // Placeholder for future
+      user: 'Human' // Could be customizable later
+    };
+    
+    // Render the template
+    return TemplateEngine.render(template, templateData);
   }
 
   async generateResponse(character, userMessage, conversationHistory = []) {
@@ -72,13 +79,13 @@ class AIService {
     }
 
     try {
-      const systemPrompt = this.buildSystemPrompt(character);
+      const systemPrompt = this.buildContextPrompt(character);
       
       const messages = [
         { role: 'system', content: systemPrompt }
       ];
 
-      // Add conversation history in clean format
+      // Add conversation history
       const recentHistory = conversationHistory.slice(-6);
       recentHistory.forEach(msg => {
         messages.push({
@@ -95,7 +102,7 @@ class AIService {
       if (authorsNote.trim()) {
         messages.push({ 
           role: 'system', 
-          content: authorsNote
+          content: `[Style: ${authorsNote}]`
         });
       }
 

@@ -4,7 +4,7 @@ import { useSettingsContext } from '../context/SettingsContext';
 import { Modal, Button } from './shared';
 
 interface PromptBlock {
-  type: 'system' | 'character' | 'conversation' | 'authors_note';
+  type: 'system' | 'roleplay_context' | 'conversation' | 'authors_note';
   category: string;
   content: string;
   tokens?: number;
@@ -37,31 +37,19 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
 
     const blocks: PromptBlock[] = [];
     
-    // 1. System Prompt
-    const systemPrompt = getSystemPrompt();
+    // 1. System Prompt (using template)
+    const systemPrompt = getSystemPromptFromTemplate();
     if (systemPrompt) {
       blocks.push({
         type: 'system',
-        category: 'System Prompt',
+        category: 'Complete System Prompt (from Template)',
         content: systemPrompt,
         tokens: estimateTokens(systemPrompt),
         editable: true
       });
     }
 
-    // 2. Character Description (only if using default prompts)
-    const characterDescription = getCharacterDescription();
-    if (characterDescription) {
-      blocks.push({
-        type: 'character',
-        category: 'Character Description',
-        content: characterDescription,
-        tokens: estimateTokens(characterDescription),
-        editable: false
-      });
-    }
-
-    // 3. Conversation History (combined into single block)
+    // 2. Conversation History
     const conversationHistory = getConversationHistory(currentUserMessage);
     if (conversationHistory) {
       blocks.push({
@@ -73,14 +61,14 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
       });
     }
 
-    // 4. Author's Note
+    // 3. Author's Note (Style instructions)
     const authorsNote = settings.llmSettings.authorsNote;
     if (authorsNote && authorsNote.trim()) {
       blocks.push({
         type: 'authors_note',
-        category: 'Author\'s Note',
-        content: authorsNote,
-        tokens: estimateTokens(authorsNote),
+        category: 'Style Instructions',
+        content: `[Style: ${authorsNote}]`,
+        tokens: estimateTokens(authorsNote) + 2, // +2 for wrapper
         editable: true
       });
     }
@@ -89,16 +77,54 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     setTotalTokens(blocks.reduce((sum, block) => sum + (block.tokens || 0), 0));
   }, [isVisible, state.aiCharacter, state.messages, currentUserMessage, settings.llmSettings]);
 
-  const getSystemPrompt = (): string => {
-    // Check if custom system prompt is enabled and provided
+  // Simple template engine matching backend
+  const renderTemplate = (template: string, data: Record<string, any>): string => {
+    let result = template;
+    
+    // Handle {{#if variable}} blocks
+    result = result.replace(/\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, variable, content) => {
+      return data[variable] ? content : '';
+    });
+    
+    // Handle simple variable substitutions
+    result = result.replace(/\{\{(\w+)\}\}/g, (match, variable) => {
+      return data[variable] || '';
+    });
+    
+    return result.trim();
+  };
+
+  const getSystemPromptFromTemplate = (): string => {
+    if (!state.aiCharacter) return '';
+
+    // Get system prompt (custom or default)
+    let systemPrompt;
     if (settings.llmSettings.systemPromptCustomization && 
         settings.llmSettings.customSystemPrompt && 
         settings.llmSettings.customSystemPrompt.trim()) {
-      return settings.llmSettings.customSystemPrompt;
+      systemPrompt = settings.llmSettings.customSystemPrompt;
+    } else {
+      systemPrompt = getDefaultCharacterPrompt();
     }
-
-    // Return default character system prompt
-    return getDefaultCharacterPrompt();
+    
+    // Get the context template
+    const template = settings.llmSettings.contextTemplate || '';
+    
+    // Prepare template data
+    const templateData: Record<string, any> = {
+      system: systemPrompt,
+      char: state.aiCharacter.name,
+      description: state.aiCharacter.personality, // Using personality as description for now
+      personality: state.aiCharacter.personality,
+      // examples: '', // For future use
+    };
+    
+    // Only include description if it's different from personality
+    if (templateData.description === templateData.personality) {
+      delete templateData.description;
+    }
+    
+    return renderTemplate(template, templateData);
   };
 
   const getDefaultCharacterPrompt = (): string => {
@@ -126,17 +152,47 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     return prompt;
   };
 
-  const getCharacterDescription = (): string => {
+  const getRoleplayContext = (): string => {
     if (!state.aiCharacter) return '';
     
-    // Only show character description if NOT using custom system prompt
+    // Only show roleplay context if NOT using custom system prompt
     if (settings.llmSettings.systemPromptCustomization && 
         settings.llmSettings.customSystemPrompt && 
         settings.llmSettings.customSystemPrompt.trim()) {
       return '';
     }
 
-    return `Character: ${state.aiCharacter.name}\nPersonality: ${state.aiCharacter.personality}`;
+    const parts = [];
+    parts.push('# **Roleplay Context**');
+    
+    // Character Description (use description if available, otherwise personality)
+    const description = state.aiCharacter.personality; // For now, this is our description
+    if (description) {
+      parts.push(`## ${state.aiCharacter.name}'s Description:`);
+      parts.push(description);
+    }
+    
+    // Character Personality (same as description for our current setup)
+    parts.push(`## ${state.aiCharacter.name}'s Personality:`);
+    parts.push(state.aiCharacter.personality);
+    
+    // User Persona
+    parts.push(`## User's Persona:`);
+    parts.push('A human conversing with AI characters.');
+    
+    // Scenario
+    parts.push(`## Scenario:`);
+    parts.push(`You are ${state.aiCharacter.name} engaging in a conversation with a human user.`);
+    
+    // Example responses would go here if we had them
+    // if (state.aiCharacter.exampleMessages) {
+    //   parts.push(`## ${state.aiCharacter.name}'s Example Response:`);
+    //   parts.push(state.aiCharacter.exampleMessages);
+    // }
+    
+    parts.push('### **End of Roleplay Context**');
+    
+    return parts.join('\n\n');
   };
 
   const getConversationHistory = (currentMessage: string): string => {
@@ -160,7 +216,7 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const getCategoryColor = (type: string): string => {
     switch (type) {
       case 'system': return '#ff8800';
-      case 'character': return '#8844ff';
+      case 'roleplay_context': return '#8844ff';
       case 'conversation': return '#44ff44';
       case 'authors_note': return '#ff4488';
       default: return '#ffffff';
@@ -170,9 +226,9 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const getCategoryIcon = (type: string): string => {
     switch (type) {
       case 'system': return '⚙️';
-      case 'character': return '👤';
+      case 'roleplay_context': return '🎭';
       case 'conversation': return '💬';
-      case 'authors_note': return '📝';
+      case 'authors_note': return '🎨';
       default: return '📄';
     }
   };
@@ -187,35 +243,63 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   };
 
   const exportFullPrompt = () => {
+    // Export the complete SillyTavern format as it's actually sent
     const fullPrompt = promptBlocks.map(block => block.content).join('\n\n');
     copyToClipboard(fullPrompt);
   };
 
-  const exportCleanPrompt = () => {
-    // Create a clean prompt format similar to what's actually sent to the API
+  const exportCleanFormat = () => {
+    // Export without any role prefixes - just the raw content
     const parts: string[] = [];
     
     promptBlocks.forEach(block => {
-      if (block.type === 'system' || block.type === 'character') {
-        parts.push(block.content);
-      } else if (block.type === 'conversation') {
-        parts.push(block.content);
-      } else if (block.type === 'authors_note') {
-        parts.push(`[${block.content}]`);
-      }
+      parts.push(block.content);
     });
     
     const cleanPrompt = parts.join('\n\n');
     copyToClipboard(cleanPrompt);
   };
 
+  const exportApiMessages = () => {
+    // Export showing how it's structured as API messages
+    const messages: string[] = [];
+    
+    // System message (combines system prompt + roleplay context)
+    const systemParts: string[] = [];
+    const systemBlock = promptBlocks.find(b => b.type === 'system');
+    const contextBlock = promptBlocks.find(b => b.type === 'roleplay_context');
+    
+    if (systemBlock) systemParts.push(systemBlock.content);
+    if (contextBlock) systemParts.push(contextBlock.content);
+    
+    if (systemParts.length > 0) {
+      messages.push(`{"role": "system", "content": "${systemParts.join('\\n\\n').replace(/"/g, '\\"')}"}`);
+    }
+    
+    // Add conversation history as separate messages
+    const recentHistory = state.messages.slice(-6);
+    recentHistory.forEach(msg => {
+      const role = msg.sender === 'user' ? 'user' : 'assistant';
+      messages.push(`{"role": "${role}", "content": "${msg.text.replace(/"/g, '\\"')}"}`);
+    });
+    
+    // Current user message
+    if (currentUserMessage.trim()) {
+      messages.push(`{"role": "user", "content": "${currentUserMessage.replace(/"/g, '\\"')}"}`);
+    }
+    
+    // Author's note as system message
+    const authorsBlock = promptBlocks.find(b => b.type === 'authors_note');
+    if (authorsBlock) {
+      messages.push(`{"role": "system", "content": "${authorsBlock.content.replace(/"/g, '\\"')}"}`);
+    }
+    
+    const apiFormat = `[\n  ${messages.join(',\n  ')}\n]`;
+    copyToClipboard(apiFormat);
+  };
+
   const openSettings = () => {
     onClose();
-    // Small delay to ensure modal closes before opening settings
-    setTimeout(() => {
-      // This would open settings, but we don't have direct access here
-      // The user can manually open settings
-    }, 100);
   };
 
   if (!isVisible) return null;
@@ -236,17 +320,20 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
 
       <div className="prompt-inspector-content">
         <div className="prompt-inspector-controls">
-          <Button onClick={exportFullPrompt} variant="secondary">
-            📋 Copy Structured
+          <Button onClick={exportFullPrompt} variant="primary">
+            📋 Copy SillyTavern Format
           </Button>
-          <Button onClick={exportCleanPrompt} variant="primary">
-            📋 Copy Clean Format
+          <Button onClick={exportCleanFormat} variant="secondary">
+            📋 Copy Clean Text
+          </Button>
+          <Button onClick={exportApiMessages} variant="secondary">
+            📋 Copy API Messages
           </Button>
           <Button onClick={openSettings} variant="secondary">
             ⚙️ Edit Prompts
           </Button>
           <small className="prompt-inspector-note">
-            "Clean Format" shows the prompt as it's actually sent to the AI
+            SillyTavern Format shows the complete structured prompt. API Messages shows the raw API call format.
           </small>
         </div>
 
@@ -296,10 +383,10 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
           )}
         </div>
 
-        {/* Show clean format preview */}
+        {/* Show complete prompt preview */}
         <div className="prompt-clean-preview">
           <h4 style={{ color: 'var(--color-yellow)', marginBottom: '12px' }}>
-            🎯 Clean Format Preview (What's sent to AI):
+            🎯 Complete Prompt (SillyTavern Format):
           </h4>
           <div className="prompt-clean-content">
             <pre className="prompt-clean-text">

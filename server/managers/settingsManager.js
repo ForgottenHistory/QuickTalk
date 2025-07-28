@@ -20,7 +20,27 @@ const defaultSettings = {
     systemPromptCustomization: false,
     responseLength: 'medium',
     customSystemPrompt: '',
-    authorsNote: ''
+    authorsNote: '',
+    contextTemplate: `{{#if system}}{{system}}
+
+{{/if}}# **Roleplay Context**
+
+{{#if description}}## {{char}}'s Description:
+{{description}}
+
+{{/if}}{{#if personality}}## {{char}}'s Personality:
+{{personality}}
+
+{{/if}}## User's Persona:
+A human conversing with AI characters.
+
+## Scenario:
+You are {{char}} engaging in a conversation with a human user.
+
+{{#if examples}}## {{char}}'s Example Response:
+{{examples}}
+
+{{/if}}### **End of Roleplay Context**`
   }
 };
 
@@ -139,6 +159,10 @@ class SettingsManager {
 
   getAuthorsNote() {
     return this.settings.llmSettings.authorsNote;
+  }
+
+  getContextTemplate() {
+    return this.settings.llmSettings.contextTemplate;
   }
 
   getSystemPromptCustomization() {

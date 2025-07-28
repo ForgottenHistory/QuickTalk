@@ -144,6 +144,24 @@ const LLMSettingsTab: React.FC = () => {
             </SettingField>
 
             <SettingField
+              label="🎭 Context Template"
+              description="Template for how character info is formatted. Uses {{char}}, {{system}}, {{description}}, {{personality}} variables and {{#if}} blocks."
+            >
+              <textarea
+                value={settings.llmSettings.contextTemplate || ''}
+                onChange={(e) => updateString('contextTemplate', e.target.value)}
+                placeholder="{{#if system}}{{system}}\n\n# **Roleplay Context**\n{{/if}}..."
+                className="form-input form-textarea"
+                rows={8}
+                style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: '12px',
+                  resize: 'vertical'
+                }}
+              />
+            </SettingField>
+
+            <SettingField
               label="📋 Author's Note"
               description="Additional instructions added at the end of each prompt. Useful for style guidance or special instructions."
             >
@@ -168,10 +186,19 @@ const LLMSettingsTab: React.FC = () => {
         <h4>💡 Custom Prompt Tips</h4>
         <ul>
           <li><strong>System Prompt:</strong> Defines the AI's core personality and behavior</li>
+          <li><strong>Context Template:</strong> Controls how character info is structured</li>
           <li><strong>Author's Note:</strong> Fine-tune responses without changing the main prompt</li>
           <li>Use the Prompt Inspector to see how your changes affect the final prompt</li>
-          <li>Custom prompts override character defaults completely</li>
-          <li>Test changes incrementally to see their effects</li>
+          <li>Custom prompts work with the context template for full control</li>
+        </ul>
+        
+        <h4>🎭 Template Variables</h4>
+        <ul>
+          <li><code>{'{{system}}'}</code> - System prompt (custom or default character prompt)</li>
+          <li><code>{'{{char}}'}</code> - Character name</li>
+          <li><code>{'{{description}}'}</code> - Character description</li>
+          <li><code>{'{{personality}}'}</code> - Character personality</li>
+          <li><code>{'{{#if variable}}...{{/if}}'}</code> - Conditional blocks</li>
         </ul>
       </div>
 
