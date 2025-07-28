@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useSessionHandling } from '../hooks/useSessionHandling';
 import { Container } from './shared';
@@ -16,6 +16,16 @@ interface ChatViewProps {
 const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
   const { state } = useAppContext();
   const { handleExit, handleExtend, handleDecline } = useSessionHandling();
+  const [currentTypingMessage, setCurrentTypingMessage] = useState('');
+
+  const handleInputChange = (message: string) => {
+    setCurrentTypingMessage(message);
+  };
+
+  const handleSendMessageWithClear = (message: string) => {
+    setCurrentTypingMessage('');
+    onSendMessage(message);
+  };
 
   if (!state.aiCharacter) {
     return null;
@@ -26,13 +36,15 @@ const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
       <ChatHeader 
         aiCharacter={state.aiCharacter} 
         timer={state.timer} 
-        onExit={handleExit} 
+        onExit={handleExit}
+        currentUserMessage={currentTypingMessage}
       />
       
       <ChatMessages messages={state.messages} />
       
       <ChatInput 
-        onSendMessage={onSendMessage} 
+        onSendMessage={handleSendMessageWithClear}
+        onInputChange={handleInputChange}
         disabled={!state.timer.isActive || !state.isConnected}
       />
       
@@ -46,7 +58,6 @@ const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
       
       <SettingsPanel />
       <CharacterManagementPanel />
-
     </Container>
   );
 };

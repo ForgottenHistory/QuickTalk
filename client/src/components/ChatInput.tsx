@@ -4,10 +4,15 @@ import { Button } from './shared';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
+  onInputChange?: (message: string) => void;
   disabled?: boolean;
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ 
+  onSendMessage, 
+  onInputChange,
+  disabled = false 
+}) => {
   const [message, setMessage] = useState('');
   const { handleUserTyping, stopUserTyping } = useTypingManagement();
 
@@ -16,6 +21,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }
       stopUserTyping();
       onSendMessage(message.trim());
       setMessage('');
+      onInputChange?.(''); // Clear the parent's tracking too
     }
   };
 
@@ -27,8 +33,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = false }
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
-    if (!disabled && e.target.value.length > 0) {
+    const newValue = e.target.value;
+    setMessage(newValue);
+    onInputChange?.(newValue); // Notify parent of input changes
+    
+    if (!disabled && newValue.length > 0) {
       handleUserTyping();
     }
   };
