@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCharacterContext } from '../context/CharacterContext';
-import { Modal, Avatar, FormField, TextInput, TextArea, TagInput, FileUpload, ModalFooter } from './shared';
+import { Modal, Avatar, FormField, TextInput, TextArea, TagInput, FileUpload, Button } from './shared';
 
 const EMOJI_OPTIONS = [
   '🤖', '🌙', '⚡', '🦉', '🎭', '🔬', '🎨', '🎵', '🌟', '🔥',
@@ -167,147 +167,159 @@ const CharacterEditor: React.FC = () => {
         </h3>
       </div>
 
-      <div className="character-editor-content">
-        {/* Basic Info */}
-        <div className="character-editor-section">
-          <h4 className="character-editor-section-title">Basic Information</h4>
-          
-          <div className="character-editor-row">
-            <FormField label="Name" required>
-              <TextInput
-                value={formData.name}
-                onChange={(value) => updateField('name', value)}
-                placeholder="Character name"
-                required
-              />
-            </FormField>
+      <div className="character-editor-form">
+        <div className="character-editor-content">
+          {/* Basic Info */}
+          <div className="character-editor-section">
+            <h4 className="character-editor-section-title">Basic Information</h4>
+            
+            <div className="character-editor-row">
+              <FormField label="Name" required>
+                <TextInput
+                  value={formData.name}
+                  onChange={(value) => updateField('name', value)}
+                  placeholder="Character name"
+                  required
+                />
+              </FormField>
 
-            <FormField label="Avatar" required>
-              <div className="character-avatar-selector">
-                {formData.avatar.startsWith('data:') ? (
-                  <img 
-                    src={formData.avatar} 
-                    alt="Character Avatar" 
-                    className="character-avatar-image"
-                  />
-                ) : (
-                  <Avatar emoji={formData.avatar} size="large" />
-                )}
-                
-                <div className="character-avatar-options">
-                  <div className="character-emoji-grid">
-                    {EMOJI_OPTIONS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => updateField('avatar', emoji)}
-                        className={`character-emoji-option ${
-                          formData.avatar === emoji ? 'selected' : ''
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+              <FormField label="Avatar" required>
+                <div className="character-avatar-selector">
+                  {formData.avatar.startsWith('data:') ? (
+                    <img 
+                      src={formData.avatar} 
+                      alt="Character Avatar" 
+                      className="character-avatar-image"
+                    />
+                  ) : (
+                    <Avatar emoji={formData.avatar} size="large" />
+                  )}
                   
-                  <FileUpload
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="character-avatar-upload"
-                  >
-                    <div className="character-avatar-upload-label">
-                      📁 Upload Image
+                  <div className="character-avatar-options">
+                    <div className="character-emoji-grid">
+                      {EMOJI_OPTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => updateField('avatar', emoji)}
+                          className={`character-emoji-option ${
+                            formData.avatar === emoji ? 'selected' : ''
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
                     </div>
-                  </FileUpload>
+                    
+                    <FileUpload
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="character-avatar-upload"
+                    >
+                      <div className="character-avatar-upload-label">
+                        📁 Upload Image
+                      </div>
+                    </FileUpload>
+                  </div>
                 </div>
-              </div>
-            </FormField>
-          </div>
+              </FormField>
+            </div>
 
-          <FormField label="Description">
-            <TextArea
-              value={formData.description}
-              onChange={(value) => updateField('description', value)}
-              placeholder="Brief description of the character"
-              rows={3}
-            />
-          </FormField>
-
-          <FormField label="Personality" description="If left empty, will use the description">
-            <TextArea
-              value={formData.personality}
-              onChange={(value) => updateField('personality', value)}
-              placeholder="Character's personality traits and behavior"
-              rows={3}
-            />
-          </FormField>
-        </div>
-
-        {/* Tags */}
-        <div className="character-editor-section">
-          <h4 className="character-editor-section-title">Tags</h4>
-          <FormField>
-            <TagInput
-              tags={formData.tags}
-              onAddTag={(tag) => updateField('tags', [...formData.tags, tag])}
-              onRemoveTag={(tag) => updateField('tags', formData.tags.filter(t => t !== tag))}
-              placeholder="Add a tag"
-            />
-          </FormField>
-        </div>
-
-        {/* Advanced Settings */}
-        <div className="character-editor-section">
-          <h4 className="character-editor-section-title">Advanced Settings</h4>
-          
-          <div className="character-editor-row">
-            <FormField label="Creator">
-              <TextInput
-                value={formData.creator}
-                onChange={(value) => updateField('creator', value)}
-                placeholder="Character creator name"
+            <FormField label="Description">
+              <TextArea
+                value={formData.description}
+                onChange={(value) => updateField('description', value)}
+                placeholder="Brief description of the character"
+                rows={3}
               />
             </FormField>
 
-            <FormField label="Version">
-              <TextInput
-                value={formData.character_version}
-                onChange={(value) => updateField('character_version', value)}
-                placeholder="1.0"
+            <FormField label="Personality" description="If left empty, will use the description">
+              <TextArea
+                value={formData.personality}
+                onChange={(value) => updateField('personality', value)}
+                placeholder="Character's personality traits and behavior"
+                rows={3}
               />
             </FormField>
           </div>
 
-          <FormField label="Creator Notes">
-            <TextArea
-              value={formData.creator_notes}
-              onChange={(value) => updateField('creator_notes', value)}
-              placeholder="Notes for character creators or users"
-              rows={3}
-            />
-          </FormField>
+          {/* Tags */}
+          <div className="character-editor-section">
+            <h4 className="character-editor-section-title">Tags</h4>
+            <FormField>
+              <TagInput
+                tags={formData.tags}
+                onAddTag={(tag) => updateField('tags', [...formData.tags, tag])}
+                onRemoveTag={(tag) => updateField('tags', formData.tags.filter(t => t !== tag))}
+                placeholder="Add a tag"
+              />
+            </FormField>
+          </div>
 
-          <FormField 
-            label="System Prompt" 
-            description="Advanced: Custom system prompt will override default AI behavior"
+          {/* Advanced Settings */}
+          <div className="character-editor-section">
+            <h4 className="character-editor-section-title">Advanced Settings</h4>
+            
+            <div className="character-editor-row">
+              <FormField label="Creator">
+                <TextInput
+                  value={formData.creator}
+                  onChange={(value) => updateField('creator', value)}
+                  placeholder="Character creator name"
+                />
+              </FormField>
+
+              <FormField label="Version">
+                <TextInput
+                  value={formData.character_version}
+                  onChange={(value) => updateField('character_version', value)}
+                  placeholder="1.0"
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Creator Notes">
+              <TextArea
+                value={formData.creator_notes}
+                onChange={(value) => updateField('creator_notes', value)}
+                placeholder="Notes for character creators or users"
+                rows={3}
+              />
+            </FormField>
+
+            <FormField 
+              label="System Prompt" 
+              description="Advanced: Custom system prompt will override default AI behavior"
+            >
+              <TextArea
+                value={formData.system_prompt}
+                onChange={(value) => updateField('system_prompt', value)}
+                placeholder="Custom system prompt for this character"
+                rows={4}
+              />
+            </FormField>
+          </div>
+        </div>
+
+        {/* Footer with Action Buttons */}
+        <div className="character-editor-footer">
+          <Button
+            onClick={handleClose}
+            variant="secondary"
+            disabled={isSaving}
           >
-            <TextArea
-              value={formData.system_prompt}
-              onChange={(value) => updateField('system_prompt', value)}
-              placeholder="Custom system prompt for this character"
-              rows={4}
-            />
-          </FormField>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="primary"
+            disabled={!formData.name.trim() || isSaving}
+          >
+            {isSaving ? '⏳ Saving...' : (isEditing ? 'Update Character' : 'Create Character')}
+          </Button>
         </div>
       </div>
-
-      <ModalFooter
-        onCancel={handleClose}
-        onSubmit={handleSubmit}
-        submitText={isEditing ? 'Update Character' : 'Create Character'}
-        isSubmitting={isSaving}
-        canSubmit={formData.name.trim() !== ''}
-      />
     </Modal>
   );
 };
