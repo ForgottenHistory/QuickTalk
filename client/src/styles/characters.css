@@ -1,0 +1,225 @@
+/* Character Management Panel */
+.character-management-modal {
+  width: 95%;
+  max-width: 1200px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.character-management-header {
+  padding: 20px;
+  border-bottom: 2px solid var(--color-yellow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-gray);
+  padding-right: 60px;
+}
+
+.character-management-title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.character-management-title {
+  color: var(--color-yellow);
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.character-count {
+  color: var(--color-yellow-light);
+  font-size: 14px;
+}
+
+.character-management-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.character-management-controls {
+  margin-bottom: 24px;
+}
+
+/* Character Grid */
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.character-card {
+  background-color: var(--color-gray);
+  border: 2px solid var(--color-yellow);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.character-card-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.character-card-info {
+  flex: 1;
+}
+
+.character-card-name {
+  color: var(--color-white);
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.character-card-description {
+  color: var(--color-yellow-light);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.character-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Character Grid Empty State */
+.character-grid-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-yellow-light);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.character-grid-empty h3 {
+  color: var(--color-white);
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.character-grid-empty p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+}
+
+/* Character Tags */
+.character-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.character-tag {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Character Meta */
+.character-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.character-meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.character-meta-label {
+  color: var(--color-yellow-light);
+}
+
+.character-meta-value {
+  color: var(--color-white);
+  font-weight: bold;
+}
+
+/* Character Avatars */
+.character-card-avatar-image,
+.character-avatar-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-yellow);
+}
+
+/* Loading Overlay */
+.character-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.character-loading-content {
+  background-color: var(--color-gray);
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid var(--color-yellow);
+}
+
+/* Character Actions */
+.character-actions {
+  background-color: var(--color-black);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.character-actions-section {
+  margin-bottom: 16px;
+}
+
+.character-actions-title {
+  color: var(--color-yellow);
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.character-actions-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.character-actions-description {
+  color: var(--color-yellow-light);
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .character-actions-buttons {
+    flex-direction: column;
+  }
+}

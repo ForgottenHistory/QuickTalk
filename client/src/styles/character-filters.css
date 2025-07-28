@@ -1,0 +1,138 @@
+/* Character Filters */
+.character-filters {
+  background-color: var(--color-black);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.character-search-form {
+  margin-bottom: 16px;
+}
+
+.character-search-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.character-search-input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid var(--color-yellow);
+  background-color: var(--color-gray);
+  color: var(--color-white);
+  font-size: 14px;
+  outline: none;
+}
+
+.character-search-input::placeholder {
+  color: #666;
+}
+
+.character-tag-filters {
+  margin-bottom: 16px;
+}
+
+.character-tag-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.character-tag-filters-label {
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.character-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.character-tag-filter {
+  background-color: var(--color-gray);
+  color: var(--color-white);
+  border: 2px solid var(--color-yellow);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.character-tag-filter:hover {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+.character-tag-filter.active {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+.character-tag-filter-check {
+  font-weight: bold;
+}
+
+/* Active Filters */
+.character-active-filters {
+  border-top: 1px solid var(--color-yellow);
+  padding-top: 12px;
+}
+
+.character-active-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.character-active-filters-label {
+  color: var(--color-yellow);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.character-active-filters-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.character-active-filter {
+  background-color: var(--color-gray);
+  border: 1px solid var(--color-yellow);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.character-active-filter-type {
+  color: var(--color-yellow-light);
+}
+
+.character-active-filter-value {
+  color: var(--color-white);
+  font-weight: bold;
+}
+
+.character-active-filter-remove {
+  background: none;
+  border: none;
+  color: var(--color-yellow);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  font-size: 10px;
+}

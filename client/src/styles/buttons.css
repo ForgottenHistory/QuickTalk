@@ -1,0 +1,63 @@
+/* Button Styles */
+.btn {
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: 2px solid var(--color-yellow);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-yellow);
+}
+
+.btn:hover:not(:disabled) {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.character-action-btn {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.character-delete-btn:hover {
+  background-color: #ff4444 !important;
+  border-color: #ff4444 !important;
+  color: var(--color-white) !important;
+}
+
+.character-search-btn,
+.character-search-clear-btn {
+  padding: 12px;
+  font-size: 14px;
+}
+
+.character-tag-clear-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.character-clear-all-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.prompt-block-copy {
+  padding: 4px 8px;
+  font-size: 12px;
+  min-width: auto;
+}

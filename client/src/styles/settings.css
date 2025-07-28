@@ -1,117 +1,119 @@
-.setting-field {
-  margin-bottom: 24px;
+/* Settings Panel Specific Styles */
+.settings-modal {
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.setting-label {
-  display: block;
-  color: #ffffff;
-  font-size: 16px;
+.settings-header {
+  padding: 20px;
+  border-bottom: 2px solid var(--color-yellow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-title {
+  color: var(--color-yellow);
+  margin: 0;
+  font-size: 24px;
   font-weight: bold;
-  margin-bottom: 8px;
-  cursor: pointer;
-}
-
-.setting-input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 2px solid #ffd900;
-  background-color: #000000;
-  color: #ffffff;
-  font-size: 14px;
-  outline: none;
-}
-
-.setting-select {
-  cursor: pointer;
-}
-
-.setting-select option {
-  background-color: #000000;
-}
-
-.setting-description {
-  color: #ffec3d;
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
-}
-
-.checkbox-container {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.setting-checkbox {
-  width: 20px;
-  height: 20px;
-  accent-color: #ffd900;
+.settings-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.checkbox-label {
-  color: #ffffff;
+.settings-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-yellow);
+}
+
+.settings-tab {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  background-color: transparent;
+  color: var(--color-white);
+  cursor: pointer;
   font-size: 16px;
   font-weight: bold;
-  margin: 0;
-  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.setting-range {
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: #000000;
-  outline: none;
-  accent-color: #ffd900;
+.settings-tab.active {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
 }
 
-.range-labels {
+.settings-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.settings-footer {
+  padding: 20px;
+  border-top: 2px solid var(--color-yellow);
+  background-color: var(--color-black);
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  color: #ffec3d;
-  margin-top: 4px;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-status {
+  font-size: 14px;
+}
+
+.settings-status.unsaved {
+  color: var(--color-yellow-light);
+}
+
+.settings-status.saved {
+  color: var(--color-white);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.section-title {
+  color: var(--color-yellow);
+  margin-bottom: 24px;
+  font-size: 20px;
 }
 
 .reset-section {
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid #ffd900;
-}
-
-.reset-button {
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 2px solid #ffd900;
-  background-color: transparent;
-  color: #ffd900;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.reset-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
+  border-top: 1px solid var(--color-yellow);
 }
 
 .performance-info {
-  background-color: #000000;
+  background-color: var(--color-black);
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid #ffd900;
+  border: 1px solid var(--color-yellow);
   margin-bottom: 24px;
 }
 
 .performance-info h4 {
-  color: #ffd900;
+  color: var(--color-yellow);
   margin: 0 0 8px 0;
   font-size: 14px;
 }
 
 .performance-info ul {
-  color: #ffec3d;
+  color: var(--color-yellow-light);
   font-size: 12px;
   margin: 0;
   padding-left: 16px;

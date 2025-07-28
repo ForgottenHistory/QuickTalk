@@ -1,0 +1,100 @@
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--color-gray);
+  border-radius: 16px;
+  border: 2px solid var(--color-yellow);
+  max-width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--color-black);
+  border: 2px solid var(--color-yellow);
+  color: var(--color-yellow);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1001;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+.modal-body {
+  padding: 30px;
+  text-align: center;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 2px solid var(--color-yellow);
+  background-color: var(--color-gray);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Extension Modal */
+.extension-modal {
+  max-width: 400px;
+  width: 90%;
+}
+
+.extension-result {
+  font-size: 18px;
+  color: var(--color-white);
+  margin-bottom: 20px;
+}
+
+.extension-title {
+  font-size: 20px;
+  color: var(--color-yellow);
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+
+.extension-question {
+  font-size: 16px;
+  color: var(--color-white);
+  margin-bottom: 8px;
+}
+
+.extension-ai-status {
+  font-size: 14px;
+  color: var(--color-yellow-light);
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+.extension-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
