@@ -4,6 +4,7 @@ const cors = require('cors');
 const { Server } = require('socket.io');
 const sessionRoutes = require('./routes/sessionRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const characterRoutes = require('./routes/characterRoutes');
 const socketHandler = require('./handlers/socketHandler');
 require('dotenv').config();
 
@@ -25,6 +26,7 @@ app.use(express.json());
 // Routes
 app.use('/api', sessionRoutes);
 app.use('/api', settingsRoutes);
+app.use('/api', characterRoutes);
 
 // Socket.io connection handling
 socketHandler(io);

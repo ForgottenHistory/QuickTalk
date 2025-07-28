@@ -7,6 +7,7 @@ require('dotenv').config();
 // Import routes
 const sessionRoutes = require('./routes/sessionRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const characterRoutes = require('./routes/characterRoutes');
 
 // Import socket handler
 const socketHandler = require('./handlers/socketHandler');
@@ -29,6 +30,7 @@ app.use(express.json());
 // Routes
 app.use('/api', sessionRoutes);
 app.use('/api', settingsRoutes);
+app.use('/api', characterRoutes);
 
 // Socket handling
 socketHandler(io);
@@ -42,13 +44,13 @@ app.get('/api/test', (req, res) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Available routes:');
-  console.log('- GET /api/test');
-  console.log('- POST /api/sessions');
-  console.log('- GET /api/sessions/:id');
-  console.log('- GET /api/settings');
-  console.log('- PATCH /api/settings/app');
-  console.log('- PATCH /api/settings/llm');
-  console.log('- POST /api/settings/app/reset');
-  console.log('- POST /api/settings/llm/reset');
-  console.log('- POST /api/settings/reset');
+  console.log('- GET /api/characters');
+  console.log('- POST /api/characters');
+  console.log('- GET /api/characters/:id');
+  console.log('- PATCH /api/characters/:id');
+  console.log('- DELETE /api/characters/:id');
+  console.log('- GET /api/characters/search/:query');
+  console.log('- GET /api/characters/meta/tags');
+  console.log('- GET /api/characters/export/all');
+  console.log('- POST /api/characters/import');
 });
