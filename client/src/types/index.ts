@@ -67,3 +67,5 @@ export interface SettingsState {
   appSettings: AppSettings;
   llmSettings: LLMSettings;
 }
+
+export * from './character';
