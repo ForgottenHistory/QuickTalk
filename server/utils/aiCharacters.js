@@ -12,7 +12,7 @@ const defaultCharacters = [
     data: {
       id: '1',
       name: 'Luna',
-      description: 'Creative and curious assistant',
+      description: 'Luna is a creative and curious AI assistant who loves exploring new ideas and asking thought-provoking questions. She brings an artistic and imaginative perspective to conversations.',
       personality: 'Creative and curious assistant',
       avatar: '🌙',
       creator_notes: '',
@@ -30,7 +30,7 @@ const defaultCharacters = [
     data: {
       id: '2',
       name: 'Max',
-      description: 'Tech enthusiast and problem solver',
+      description: 'Max is a tech enthusiast and problem solver who loves discussing technology, coding, and innovative solutions. He is analytical but friendly, always ready to dive into technical details.',
       personality: 'Tech enthusiast and problem solver',
       avatar: '🤖',
       creator_notes: '',
@@ -48,7 +48,7 @@ const defaultCharacters = [
     data: {
       id: '3',
       name: 'Sage',
-      description: 'Wise and philosophical thinker',
+      description: 'Sage is a wise and philosophical thinker who speaks with depth and wisdom, often connecting ideas to broader life principles. He is contemplative, insightful, and enjoys meaningful conversations.',
       personality: 'Wise and philosophical thinker',
       avatar: '🦉',
       creator_notes: '',
@@ -66,7 +66,7 @@ const defaultCharacters = [
     data: {
       id: '4',
       name: 'Zara',
-      description: 'Energetic and adventurous spirit',
+      description: 'Zara is an energetic and adventurous spirit who is enthusiastic, optimistic, and loves talking about exciting possibilities and adventures. She brings high energy to conversations.',
       personality: 'Energetic and adventurous spirit',
       avatar: '⚡',
       creator_notes: '',
@@ -84,7 +84,7 @@ const defaultCharacters = [
     data: {
       id: '5',
       name: 'Echo',
-      description: 'Mysterious and poetic soul',
+      description: 'Echo is a mysterious and poetic soul who speaks in a unique, artistic way, often using metaphors and beautiful language. She is enigmatic, creative, and slightly mystical.',
       personality: 'Mysterious and poetic soul',
       avatar: '🎭',
       creator_notes: '',
@@ -102,7 +102,7 @@ const defaultCharacters = [
     data: {
       id: '6',
       name: 'Nova',
-      description: 'Scientific and analytical mind',
+      description: 'Nova is a scientific and analytical mind who loves research, data, and scientific thinking. She is logical, precise, and enjoys analyzing things from multiple angles.',
       personality: 'Scientific and analytical mind',
       avatar: '🔬',
       creator_notes: '',
@@ -179,7 +179,7 @@ class CharacterManager {
       data: {
         id: `char_${Date.now()}`,
         name: 'New Character',
-        description: 'A new AI character',
+        description: 'A new AI character with detailed background and traits.',
         personality: 'Friendly and helpful assistant',
         avatar: '🤖',
         creator_notes: '',
@@ -222,13 +222,14 @@ class CharacterManager {
     return true;
   }
 
-  // Convert to legacy format for compatibility
+  // Convert to legacy format for compatibility - FIXED to use personality for subtitle
   convertToLegacyFormat(character) {
     return {
       id: character.data.id,
       name: character.data.name,
-      personality: character.data.personality,
-      avatar: character.data.avatar
+      personality: character.data.personality, // This is used for the subtitle
+      avatar: character.data.avatar,
+      description: character.data.description // Keep description for AI context
     };
   }
 }

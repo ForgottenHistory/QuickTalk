@@ -1,6 +1,5 @@
 const OpenAI = require('openai');
 const settingsManager = require('../managers/settingsManager');
-const TemplateEngine = require('./templateEngine');
 
 class AIService {
   constructor() {
@@ -14,6 +13,23 @@ class AIService {
         apiKey: process.env.FEATHERLESS_API_KEY,
       });
     }
+  }
+
+  // Simple template engine for Handlebars-style templates
+  renderTemplate(template, data) {
+    let result = template;
+    
+    // Handle {{#if variable}} blocks
+    result = result.replace(/\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, variable, content) => {
+      return data[variable] ? content : '';
+    });
+    
+    // Handle simple variable substitutions
+    result = result.replace(/\{\{(\w+)\}\}/g, (match, variable) => {
+      return data[variable] || '';
+    });
+    
+    return result.trim();
   }
 
   getDefaultSystemPrompt(character) {
@@ -46,30 +62,35 @@ class AIService {
     return prompt;
   }
 
-  buildContextPrompt(character) {
-    // Get the context template
-    const template = settingsManager.getContextTemplate();
-    
-    // Get base system prompt (custom or default)
-    let systemPrompt = '';
+  buildContextFromTemplate(character) {
+    // Get system prompt (custom or default)
+    let systemPrompt;
     if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
       systemPrompt = settingsManager.getCustomSystemPrompt();
     } else {
       systemPrompt = this.getDefaultSystemPrompt(character);
     }
     
+    // Get the context template
+    const template = settingsManager.getContextTemplate();
+    
     // Prepare template data
     const templateData = {
       system: systemPrompt,
       char: character.name,
-      description: character.description || character.personality, // Use description if available, fallback to personality
-      personality: character.personality,
-      examples: character.examples || '', // Placeholder for future
-      user: 'Human' // Could be customizable later
+      description: character.description, // Use the full description field
+      personality: character.personality, // Short personality summary
+      // examples: character.examples || '', // For future use
     };
     
-    // Render the template
-    return TemplateEngine.render(template, templateData);
+    console.log('Template data:', JSON.stringify(templateData, null, 2));
+    
+    // Only include description if it exists and is different from personality
+    if (!templateData.description || templateData.description === templateData.personality) {
+      delete templateData.description;
+    }
+    
+    return this.renderTemplate(template, templateData);
   }
 
   async generateResponse(character, userMessage, conversationHistory = []) {
@@ -79,7 +100,7 @@ class AIService {
     }
 
     try {
-      const systemPrompt = this.buildContextPrompt(character);
+      const systemPrompt = this.buildContextFromTemplate(character);
       
       const messages = [
         { role: 'system', content: systemPrompt }

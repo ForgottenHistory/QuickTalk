@@ -43,7 +43,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         {renderAvatar()}
         <div className="character-card-info">
           <h3 className="character-card-name">{data.name}</h3>
-          <p className="character-card-description">{data.description}</p>
+          <p className="character-card-description">{data.personality}</p>
         </div>
       </div>
 

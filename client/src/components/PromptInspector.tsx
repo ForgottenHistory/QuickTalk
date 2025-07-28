@@ -97,6 +97,8 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const getSystemPromptFromTemplate = (): string => {
     if (!state.aiCharacter) return '';
 
+    console.log('Current aiCharacter data:', JSON.stringify(state.aiCharacter, null, 2));
+
     // Get system prompt (custom or default)
     let systemPrompt;
     if (settings.llmSettings.systemPromptCustomization && 
@@ -114,17 +116,24 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     const templateData: Record<string, any> = {
       system: systemPrompt,
       char: state.aiCharacter.name,
-      description: state.aiCharacter.personality, // Using personality as description for now
-      personality: state.aiCharacter.personality,
+      description: state.aiCharacter.description, // Use the description field
+      personality: state.aiCharacter.personality, // Short personality summary
       // examples: '', // For future use
     };
     
-    // Only include description if it's different from personality
-    if (templateData.description === templateData.personality) {
+    console.log('Template data:', JSON.stringify(templateData, null, 2));
+    
+    // Only include description if it exists and is different from personality
+    if (!templateData.description || templateData.description === templateData.personality) {
       delete templateData.description;
     }
     
-    return renderTemplate(template, templateData);
+    console.log('Final template data:', JSON.stringify(templateData, null, 2));
+    
+    const result = renderTemplate(template, templateData);
+    console.log('Rendered template result:', result);
+    
+    return result;
   };
 
   const getDefaultCharacterPrompt = (): string => {

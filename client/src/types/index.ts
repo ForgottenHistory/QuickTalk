@@ -10,6 +10,7 @@ export interface AICharacter {
   name: string;
   personality: string;
   avatar: string;
+  description?: string; // Add description field
 }
 
 export interface ChatSession {
@@ -71,4 +72,4 @@ export interface SettingsState {
   llmSettings: LLMSettings;
 }
 
-export * from './character';  
+export * from './character';

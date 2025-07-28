@@ -38,9 +38,11 @@ const defaultLLMSettings: LLMSettings = {
 # **Roleplay Context**
 {{/if}}{{#if description}}## {{char}}'s Description:
 {{description}}
-{{/if}}{{#if personality}}## {{char}}'s Personality:
+
+{{/if}}## {{char}}'s Personality:
 {{personality}}
-{{/if}}## User's Persona:
+
+## User's Persona:
 A human conversing with AI characters.
 
 ## Scenario:
