@@ -3,6 +3,52 @@ const path = require('path');
 
 const CHARACTERS_FILE = path.join(__dirname, '../data/characters.json');
 const DATA_DIR = path.join(__dirname, '../data');
+const IMAGES_DIR = path.join(__dirname, '../data/images');
+
+// Utility function to save base64 image and return filename
+const saveBase64Image = async (base64Data, characterId) => {
+  try {
+    // Ensure images directory exists
+    try {
+      await fs.access(IMAGES_DIR);
+    } catch (error) {
+      await fs.mkdir(IMAGES_DIR, { recursive: true });
+    }
+
+    // Extract image data and format
+    const matches = base64Data.match(/^data:image\/(png|jpg|jpeg|gif);base64,(.+)$/);
+    if (!matches) {
+      throw new Error('Invalid base64 image format');
+    }
+
+    const imageFormat = matches[1];
+    const imageData = matches[2];
+    const filename = `${characterId}.${imageFormat}`;
+    const filePath = path.join(IMAGES_DIR, filename);
+
+    // Save the image file
+    await fs.writeFile(filePath, imageData, 'base64');
+    
+    console.log(`Saved character image: ${filename}`);
+    return filename;
+  } catch (error) {
+    console.error('Failed to save character image:', error);
+    return null;
+  }
+};
+
+// Utility function to delete character image
+const deleteCharacterImage = async (filename) => {
+  if (!filename || filename.startsWith('data:')) return; // Skip if emoji or base64
+  
+  try {
+    const filePath = path.join(IMAGES_DIR, filename);
+    await fs.unlink(filePath);
+    console.log(`Deleted character image: ${filename}`);
+  } catch (error) {
+    console.error('Failed to delete character image:', error);
+  }
+};
 
 // Default characters for migration/fallback
 const defaultCharacters = [
@@ -173,11 +219,13 @@ class CharacterManager {
   }
 
   async createCharacter(characterData) {
+    const characterId = `char_${Date.now()}`;
+    
     const newCharacter = {
       spec: 'chara_card_v2',
       spec_version: '2.0',
       data: {
-        id: `char_${Date.now()}`,
+        id: characterId,
         name: 'New Character',
         description: 'A new AI character with detailed background and traits.',
         personality: 'Friendly and helpful assistant',
@@ -193,6 +241,14 @@ class CharacterManager {
       }
     };
 
+    // Handle image avatar
+    if (characterData.avatar && characterData.avatar.startsWith('data:image/')) {
+      const savedFilename = await saveBase64Image(characterData.avatar, characterId);
+      if (savedFilename) {
+        newCharacter.data.avatar = savedFilename;
+      }
+    }
+
     this.characters.push(newCharacter);
     await this.saveCharacters();
     return newCharacter;
@@ -201,6 +257,22 @@ class CharacterManager {
   async updateCharacter(id, updates) {
     const index = this.characters.findIndex(char => char.data.id === id);
     if (index === -1) return null;
+
+    const currentCharacter = this.characters[index];
+    
+    // Handle avatar updates
+    if (updates.avatar && updates.avatar.startsWith('data:image/')) {
+      // Delete old image if it exists
+      if (currentCharacter.data.avatar && !currentCharacter.data.avatar.startsWith('data:') && currentCharacter.data.avatar.length > 2) {
+        await deleteCharacterImage(currentCharacter.data.avatar);
+      }
+      
+      // Save new image
+      const savedFilename = await saveBase64Image(updates.avatar, id);
+      if (savedFilename) {
+        updates.avatar = savedFilename;
+      }
+    }
 
     this.characters[index].data = {
       ...this.characters[index].data,
@@ -216,6 +288,13 @@ class CharacterManager {
   async deleteCharacter(id) {
     const index = this.characters.findIndex(char => char.data.id === id);
     if (index === -1) return false;
+
+    const character = this.characters[index];
+    
+    // Delete associated image if it exists
+    if (character.data.avatar && !character.data.avatar.startsWith('data:') && character.data.avatar.length > 2) {
+      await deleteCharacterImage(character.data.avatar);
+    }
 
     this.characters.splice(index, 1);
     await this.saveCharacters();

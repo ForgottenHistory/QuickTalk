@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { characterManager } = require('../utils/aiCharacters');
 
 const router = express.Router();
@@ -187,6 +188,29 @@ router.post('/characters/import', async (req, res) => {
   } catch (error) {
     console.error('Error importing characters:', error);
     res.status(500).json({ error: 'Failed to import characters' });
+  }
+});
+
+// Serve character images
+router.get('/characters/images/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const imagePath = path.join(__dirname, '../data/images', filename);
+    
+    // Security check - ensure filename doesn't contain path traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+    
+    res.sendFile(imagePath, (err) => {
+      if (err) {
+        console.error('Image not found:', filename);
+        res.status(404).json({ error: 'Image not found' });
+      }
+    });
+  } catch (error) {
+    console.error('Error serving image:', error);
+    res.status(500).json({ error: 'Failed to serve image' });
   }
 });
 

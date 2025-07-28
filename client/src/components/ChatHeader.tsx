@@ -23,6 +23,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const { dispatch: characterDispatch } = useCharacterContext();
   const [showPromptInspector, setShowPromptInspector] = useState(false);
 
+  console.log('ChatHeader aiCharacter:', JSON.stringify(aiCharacter, null, 2));
+
   const handleSettingsClick = () => {
     dispatch({ type: 'TOGGLE_SETTINGS' });
   };

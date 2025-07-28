@@ -1420,6 +1420,7 @@
 
 .prompt-inspector-header {
   padding: 20px;
+  padding-right: 80px;
   border-bottom: 2px solid var(--color-yellow);
   background-color: var(--color-gray);
   display: flex;

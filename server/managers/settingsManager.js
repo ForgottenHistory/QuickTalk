@@ -3,6 +3,7 @@ const path = require('path');
 
 const SETTINGS_FILE = path.join(__dirname, '../data/settings.json');
 const DATA_DIR = path.join(__dirname, '../data');
+const IMAGES_DIR = path.join(__dirname, '../data/images');
 
 // Default settings
 const defaultSettings = {
