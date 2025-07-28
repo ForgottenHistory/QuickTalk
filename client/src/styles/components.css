@@ -1247,3 +1247,65 @@
     flex-direction: column;
   }
 }
+
+/* Character Avatar Images */
+.character-card-avatar-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-yellow);
+}
+
+.character-avatar-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-yellow);
+}
+
+/* Character Editor Avatar Selector */
+.character-avatar-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.character-avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.character-avatar-input {
+  display: none;
+}
+
+.character-avatar-upload-label {
+  padding: 8px 16px;
+  background-color: var(--color-gray);
+  color: var(--color-white);
+  border: 2px solid var(--color-yellow);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.character-avatar-upload-label:hover {
+  background-color: var(--color-yellow);
+  color: var(--color-black);
+}
+
+/* Responsive avatar selector */
+@media (max-width: 768px) {
+  .character-avatar-selector {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .character-avatar-options {
+    width: 100%;
+  }
+}

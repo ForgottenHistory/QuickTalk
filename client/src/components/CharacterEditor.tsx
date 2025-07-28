@@ -1,5 +1,3 @@
-// src/components/CharacterEditor.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useCharacterContext } from '../context/CharacterContext';
 import { Modal, Button, Avatar } from './shared';
@@ -105,6 +103,54 @@ const CharacterEditor: React.FC = () => {
     }));
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Optimize the image before setting it
+      const optimizedDataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d')!;
+            
+            // Resize to max 256px square
+            const maxSize = 256;
+            const size = Math.min(maxSize, Math.max(img.width, img.height));
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Draw image centered and scaled
+            const scale = size / Math.max(img.width, img.height);
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+            const x = (size - scaledWidth) / 2;
+            const y = (size - scaledHeight) / 2;
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, size);
+            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            resolve(dataUrl);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+
+      handleInputChange('avatar', optimizedDataUrl);
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      alert('Failed to upload image. Please try again.');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -182,20 +228,44 @@ const CharacterEditor: React.FC = () => {
               <div className="character-editor-field">
                 <label className="character-editor-label">Avatar *</label>
                 <div className="character-avatar-selector">
-                  <Avatar emoji={formData.avatar} size="large" />
-                  <div className="character-emoji-grid">
-                    {emojiOptions.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => handleInputChange('avatar', emoji)}
-                        className={`character-emoji-option ${
-                          formData.avatar === emoji ? 'selected' : ''
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+                  {formData.avatar.startsWith('data:') ? (
+                    <img 
+                      src={formData.avatar} 
+                      alt="Character Avatar" 
+                      className="character-avatar-image"
+                    />
+                  ) : (
+                    <Avatar emoji={formData.avatar} size="large" />
+                  )}
+                  
+                  <div className="character-avatar-options">
+                    <div className="character-emoji-grid">
+                      {emojiOptions.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => handleInputChange('avatar', emoji)}
+                          className={`character-emoji-option ${
+                            formData.avatar === emoji ? 'selected' : ''
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="character-avatar-upload">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="character-avatar-input"
+                        id="avatar-upload"
+                      />
+                      <label htmlFor="avatar-upload" className="character-avatar-upload-label">
+                        📁 Upload Image
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>

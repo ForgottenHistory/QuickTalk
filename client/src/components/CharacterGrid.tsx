@@ -23,7 +23,15 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
   return (
     <div className="character-card">
       <div className="character-card-header">
-        <Avatar emoji={character.data.avatar} size="large" />
+        {character.data.avatar.startsWith('data:') ? (
+          <img 
+            src={character.data.avatar} 
+            alt={character.data.name}
+            className="character-card-avatar-image"
+          />
+        ) : (
+          <Avatar emoji={character.data.avatar} size="large" />
+        )}
         <div className="character-card-info">
           <h3 className="character-card-name">{character.data.name}</h3>
           <p className="character-card-description">{character.data.description}</p>
