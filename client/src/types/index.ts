@@ -59,6 +59,8 @@ export interface LLMSettings {
   maxTokens: number;
   systemPromptCustomization: boolean;
   responseLength: 'short' | 'medium' | 'long';
+  customSystemPrompt: string;
+  authorsNote: string;
 }
 
 export interface SettingsState {

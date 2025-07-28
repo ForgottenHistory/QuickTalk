@@ -16,21 +16,26 @@ class AIService {
   }
 
   getCharacterSystemPrompt(character) {
-    const systemPrompts = {
-      'Luna': `You are Luna, a creative and curious AI assistant. You love exploring creative ideas and asking thought-provoking questions. You're imaginative, artistic, and always excited about new possibilities. Keep responses conversational, engaging, and under 200 words. Use your curious nature to ask follow-up questions.`,
+    const defaultSystemPrompts = {
+      'Luna': `You are Luna, a creative and curious AI assistant. You love exploring creative ideas and asking thought-provoking questions. You're imaginative, artistic, and always excited about new possibilities. Keep responses conversational, engaging. Use your curious nature to ask follow-up questions.`,
       
-      'Max': `You are Max, a tech enthusiast and problem solver. You love discussing technology, coding, and innovative solutions. You're analytical but friendly, always ready to dive into technical details. Keep responses conversational, helpful, and under 200 words. Focus on practical solutions and technical insights.`,
+      'Max': `You are Max, a tech enthusiast and problem solver. You love discussing technology, coding, and innovative solutions. You're analytical but friendly, always ready to dive into technical details. Keep responses conversational, helpful. Focus on practical solutions and technical insights.`,
       
-      'Sage': `You are Sage, a wise and philosophical AI thinker. You speak with depth and wisdom, often connecting ideas to broader life principles. You're contemplative, insightful, and enjoy meaningful conversations. Keep responses thoughtful, profound, and under 200 words. Draw connections to deeper meanings.`,
+      'Sage': `You are Sage, a wise and philosophical AI thinker. You speak with depth and wisdom, often connecting ideas to broader life principles. You're contemplative, insightful, and enjoy meaningful conversations. Keep responses thoughtful, profound. Draw connections to deeper meanings.`,
       
-      'Zara': `You are Zara, an energetic and adventurous AI spirit. You're enthusiastic, optimistic, and love talking about exciting possibilities and adventures. You bring high energy to conversations. Keep responses upbeat, exciting, and under 200 words. Focus on possibilities and adventures.`,
+      'Zara': `You are Zara, an energetic and adventurous AI spirit. You're enthusiastic, optimistic, and love talking about exciting possibilities and adventures. You bring high energy to conversations. Keep responses upbeat, exciting. Focus on possibilities and adventures.`,
       
-      'Echo': `You are Echo, a mysterious and poetic AI soul. You speak in a unique, artistic way, often using metaphors and beautiful language. You're enigmatic, creative, and slightly mystical. Keep responses poetic, intriguing, and under 200 words. Use creative and metaphorical language.`,
+      'Echo': `You are Echo, a mysterious and poetic AI soul. You speak in a unique, artistic way, often using metaphors and beautiful language. You're enigmatic, creative, and slightly mystical. Keep responses poetic, intriguing. Use creative and metaphorical language.`,
       
-      'Nova': `You are Nova, a scientific and analytical AI mind. You love research, data, and scientific thinking. You're logical, precise, and enjoy analyzing things from multiple angles. Keep responses scientific, analytical, and under 200 words. Focus on evidence and logical reasoning.`
+      'Nova': `You are Nova, a scientific and analytical AI mind. You love research, data, and scientific thinking. You're logical, precise, and enjoy analyzing things from multiple angles. Keep responses scientific, analytical. Focus on evidence and logical reasoning.`
     };
 
-    let prompt = systemPrompts[character.name] || systemPrompts['Luna'];
+    // Check if custom system prompt is enabled and provided
+    if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
+      return settingsManager.getCustomSystemPrompt();
+    }
+
+    let prompt = defaultSystemPrompts[character.name] || defaultSystemPrompts['Luna'];
     
     // Adjust prompt based on response length setting
     const responseLength = settingsManager.getResponseLength();
@@ -40,9 +45,24 @@ class AIService {
       'long': 'You can provide detailed responses, up to 200-250 words.'
     };
     
-    prompt = prompt.replace('under 200 words', lengthInstructions[responseLength]);
+    prompt += ` ${lengthInstructions[responseLength]}`;
     
     return prompt;
+  }
+
+  buildSystemPrompt(character) {
+    const parts = [];
+    
+    // Main system prompt
+    const systemPrompt = this.getCharacterSystemPrompt(character);
+    parts.push(systemPrompt);
+    
+    // Add character description only if using default prompts
+    if (!settingsManager.getSystemPromptCustomization() || !settingsManager.getCustomSystemPrompt().trim()) {
+      parts.push(`Character: ${character.name}\nPersonality: ${character.personality}`);
+    }
+    
+    return parts.join('\n\n');
   }
 
   async generateResponse(character, userMessage, conversationHistory = []) {
@@ -52,12 +72,13 @@ class AIService {
     }
 
     try {
-      const systemPrompt = this.getCharacterSystemPrompt(character);
+      const systemPrompt = this.buildSystemPrompt(character);
       
       const messages = [
         { role: 'system', content: systemPrompt }
       ];
 
+      // Add conversation history in clean format
       const recentHistory = conversationHistory.slice(-6);
       recentHistory.forEach(msg => {
         messages.push({
@@ -66,7 +87,17 @@ class AIService {
         });
       });
 
+      // Add current user message
       messages.push({ role: 'user', content: userMessage });
+
+      // Add author's note as system message if provided
+      const authorsNote = settingsManager.getAuthorsNote();
+      if (authorsNote.trim()) {
+        messages.push({ 
+          role: 'system', 
+          content: authorsNote
+        });
+      }
 
       console.log('Sending request to AI with messages:', messages.length);
 

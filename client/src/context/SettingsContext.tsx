@@ -30,7 +30,9 @@ const defaultLLMSettings: LLMSettings = {
   temperature: 0.8,
   maxTokens: 300,
   systemPromptCustomization: false,
-  responseLength: 'medium'
+  responseLength: 'medium',
+  customSystemPrompt: '',
+  authorsNote: ''
 };
 
 interface ExtendedSettingsState extends SettingsState {
@@ -153,8 +155,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       dispatch({ type: 'SET_ERROR', payload: null });
       
       const data = await settingsService.getSettings();
+      
+      // Ensure new fields have defaults
+      const llmSettingsWithDefaults = {
+        ...defaultLLMSettings,
+        ...data.llmSettings
+      };
+      
       dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: data.appSettings });
-      dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: data.llmSettings });
+      dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: llmSettingsWithDefaults });
       dispatch({ type: 'SET_INITIAL_LOAD_COMPLETE', payload: true });
     } catch (error) {
       handleError(error);

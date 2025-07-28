@@ -43,7 +43,15 @@ router.patch('/settings/llm', async (req, res) => {
     const updates = req.body;
     
     // Validate LLM settings
-    const validFields = ['model', 'temperature', 'maxTokens', 'systemPromptCustomization', 'responseLength'];
+    const validFields = [
+      'model', 
+      'temperature', 
+      'maxTokens', 
+      'systemPromptCustomization', 
+      'responseLength',
+      'customSystemPrompt',
+      'authorsNote'
+    ];
     const filteredUpdates = {};
     
     for (const [key, value] of Object.entries(updates)) {

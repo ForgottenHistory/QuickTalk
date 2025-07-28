@@ -55,10 +55,9 @@ const LLMSettingsTab: React.FC = () => {
 
   return (
     <div>
-      <h3 style={{ color: '#ffd900', marginBottom: '24px', fontSize: '20px' }}>
-        Large Language Model Settings
-      </h3>
+      <h3 className="section-title">Large Language Model Settings</h3>
 
+      {/* Basic LLM Settings */}
       <SettingField
         label="🤖 AI Model"
         description="Choose the AI model for generating responses"
@@ -109,24 +108,70 @@ const LLMSettingsTab: React.FC = () => {
         />
       </SettingField>
 
-      <SettingField
-        description="Allow modification of AI character system prompts (Advanced users only)"
-      >
-        <CheckboxInput
-          id="systemPromptCustomization"
-          checked={settings.llmSettings.systemPromptCustomization}
-          onChange={(v) => updateBoolean('systemPromptCustomization', v)}
-          label="⚙️ Enable custom system prompts"
-        />
-      </SettingField>
+      {/* Custom Prompt Settings */}
+      <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--color-yellow)' }}>
+        <h4 className="section-title">Custom Prompt Settings</h4>
+
+        <SettingField
+          description="Enable custom system prompts and author's notes (Advanced users only)"
+        >
+          <CheckboxInput
+            id="systemPromptCustomization"
+            checked={settings.llmSettings.systemPromptCustomization}
+            onChange={(v) => updateBoolean('systemPromptCustomization', v)}
+            label="⚙️ Enable custom prompts"
+          />
+        </SettingField>
+
+        {settings.llmSettings.systemPromptCustomization && (
+          <>
+            <SettingField
+              label="📜 Custom System Prompt"
+              description="Override the default character behavior with a custom system prompt. Leave empty to use character defaults."
+            >
+              <textarea
+                value={settings.llmSettings.customSystemPrompt || ''}
+                onChange={(e) => updateString('customSystemPrompt', e.target.value)}
+                placeholder="Enter your custom system prompt here..."
+                className="form-input form-textarea"
+                rows={6}
+                style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: '13px',
+                  resize: 'vertical'
+                }}
+              />
+            </SettingField>
+
+            <SettingField
+              label="📋 Author's Note"
+              description="Additional instructions added at the end of each prompt. Useful for style guidance or special instructions."
+            >
+              <textarea
+                value={settings.llmSettings.authorsNote || ''}
+                onChange={(e) => updateString('authorsNote', e.target.value)}
+                placeholder="e.g., 'Keep responses under 100 words', 'Use a formal tone', 'Focus on practical advice'..."
+                className="form-input form-textarea"
+                rows={3}
+                style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: '13px',
+                  resize: 'vertical'
+                }}
+              />
+            </SettingField>
+          </>
+        )}
+      </div>
 
       <div className="performance-info">
-        <h4>💡 Performance Tips</h4>
+        <h4>💡 Custom Prompt Tips</h4>
         <ul>
-          <li>Lower temperature (0.3-0.5) for more consistent responses</li>
-          <li>Higher temperature (0.7-0.9) for more creative conversations</li>
-          <li>Shorter responses load faster and use less API credits</li>
-          <li>Different models have different personalities and capabilities</li>
+          <li><strong>System Prompt:</strong> Defines the AI's core personality and behavior</li>
+          <li><strong>Author's Note:</strong> Fine-tune responses without changing the main prompt</li>
+          <li>Use the Prompt Inspector to see how your changes affect the final prompt</li>
+          <li>Custom prompts override character defaults completely</li>
+          <li>Test changes incrementally to see their effects</li>
         </ul>
       </div>
 

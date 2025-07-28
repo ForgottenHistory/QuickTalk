@@ -18,7 +18,9 @@ const defaultSettings = {
     temperature: 0.8,
     maxTokens: 300,
     systemPromptCustomization: false,
-    responseLength: 'medium'
+    responseLength: 'medium',
+    customSystemPrompt: '',
+    authorsNote: ''
   }
 };
 
@@ -129,6 +131,18 @@ class SettingsManager {
 
   getResponseLength() {
     return this.settings.llmSettings.responseLength;
+  }
+
+  getCustomSystemPrompt() {
+    return this.settings.llmSettings.customSystemPrompt;
+  }
+
+  getAuthorsNote() {
+    return this.settings.llmSettings.authorsNote;
+  }
+
+  getSystemPromptCustomization() {
+    return this.settings.llmSettings.systemPromptCustomization;
   }
 }
 
