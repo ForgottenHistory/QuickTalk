@@ -1,6 +1,7 @@
 import React from 'react';
 import { AICharacter, Timer as TimerType } from '../types';
 import { useSettingsContext } from '../context/SettingsContext';
+import { useCharacterContext } from '../context/CharacterContext';
 import { Button, Avatar, Container } from './shared';
 import Timer from './Timer';
 
@@ -12,6 +13,7 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ aiCharacter, timer, onExit }) => {
   const { dispatch } = useSettingsContext();
+  const { dispatch: characterDispatch } = useCharacterContext();
 
   const handleSettingsClick = () => {
     dispatch({ type: 'TOGGLE_SETTINGS' });
@@ -26,11 +28,14 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ aiCharacter, timer, onExit }) =
           <p className="header-subtitle">{aiCharacter.personality}</p>
         </div>
       </div>
-      
+
       <div className="header-right">
         <Timer timer={timer} />
         <Button onClick={handleSettingsClick} variant="secondary">
           ⚙️ Settings
+        </Button>
+        <Button onClick={() => characterDispatch({ type: 'TOGGLE_MANAGEMENT' })} variant="secondary">
+          👥 Characters
         </Button>
         <Button onClick={onExit} variant="secondary">
           Exit Chat

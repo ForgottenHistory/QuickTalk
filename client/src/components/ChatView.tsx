@@ -7,6 +7,7 @@ import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import ExtensionModal from './ExtensionModal';
 import SettingsPanel from './SettingsPanel';
+import CharacterManagementPanel from './CharacterManagementPanel';
 
 interface ChatViewProps {
   onSendMessage: (text: string) => void;
@@ -44,6 +45,8 @@ const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
       />
       
       <SettingsPanel />
+      <CharacterManagementPanel />
+
     </Container>
   );
 };
