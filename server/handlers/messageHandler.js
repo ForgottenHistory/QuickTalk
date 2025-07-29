@@ -63,21 +63,8 @@ const handleMessage = async (io, socket, sessionId, message) => {
           sender: 'ai' 
         });
         
-        // Clean and format response, then send as messages
-        const formattedResponse = formatAIResponse(aiResponseText);
-        if (formattedResponse) {
-          await sendMultipleMessages(io, sessionId, formattedResponse, session.aiCharacter.name);
-        } else {
-          // If entire response was filtered out, send a fallback
-          const fallbackResponse = {
-            id: uuidv4(),
-            text: "Let me rephrase that...",
-            sender: 'ai',
-            timestamp: new Date()
-          };
-          sessionManager.addMessage(sessionId, fallbackResponse);
-          io.to(sessionId).emit('new-message', fallbackResponse);
-        }
+        // Process and send response as messages
+        await sendMultipleMessages(io, sessionId, aiResponseText, session.aiCharacter.name);
         
       } catch (error) {
         console.error('Error generating AI response:', error);
@@ -103,41 +90,68 @@ const handleMessage = async (io, socket, sessionId, message) => {
   }, thinkingDelay);
 };
 
-const formatAIResponse = (responseText) => {
-  if (!responseText || typeof responseText !== 'string') {
-    return null;
-  }
-  
-  // First format the entire response
-  const formattedText = textFormatter.formatMessage(responseText);
-  
-  // If entire response was an action, return null
-  if (!formattedText) {
-    return null;
-  }
-  
-  // Clean up multiple newlines and whitespace
-  let cleaned = formattedText.trim();
-  cleaned = cleaned.replace(/[\r\n]{3,}/g, '\n\n');
-  cleaned = cleaned.replace(/\n\n+/g, '\n');
-  cleaned = cleaned.replace(/\r/g, '');
-  
-  console.log(`Formatted AI response: "${cleaned}"`);
-  return cleaned;
-};
-
 const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
-  // Split by newlines and process each part
-  const messageParts = responseText.split('\n')
-    .map(part => part.trim())
-    .filter(part => part.length > 0)
-    .map(part => textFormatter.formatMessage(part)) // Format each part
-    .filter(part => part !== null); // Remove parts that were entirely actions
+  if (!responseText || typeof responseText !== 'string') {
+    console.log('Empty or invalid response text, sending fallback');
+    const fallbackMessage = {
+      id: uuidv4(),
+      text: "Let me think of another way to respond...",
+      sender: 'ai',
+      timestamp: new Date()
+    };
+    sessionManager.addMessage(sessionId, fallbackMessage);
+    io.to(sessionId).emit('new-message', fallbackMessage);
+    return;
+  }
+
+  // Clean up the response text first
+  let cleaned = responseText.trim();
+  cleaned = cleaned.replace(/[\r\n]{3,}/g, '\n\n'); // Replace 3+ newlines with 2
+  cleaned = cleaned.replace(/\r/g, ''); // Remove carriage returns
   
-  console.log(`Splitting AI response into ${messageParts.length} messages for session ${sessionId}`);
+  console.log(`Original response: "${responseText}"`);
+  console.log(`Cleaned response: "${cleaned}"`);
+  
+  // Split by double newlines first (paragraph breaks), then single newlines
+  let messageParts = [];
+  
+  // First split by double newlines (paragraph breaks)
+  const paragraphs = cleaned.split('\n\n').filter(p => p.trim().length > 0);
+  
+  // Then split each paragraph by single newlines if needed
+  paragraphs.forEach(paragraph => {
+    const lines = paragraph.split('\n').filter(line => line.trim().length > 0);
+    if (lines.length === 1) {
+      // Single line paragraph - add as is
+      messageParts.push(lines[0].trim());
+    } else {
+      // Multi-line paragraph - treat each line as separate message
+      lines.forEach(line => {
+        if (line.trim().length > 0) {
+          messageParts.push(line.trim());
+        }
+      });
+    }
+  });
+  
+  console.log(`Split into ${messageParts.length} parts:`, messageParts);
+  
+  // Now filter through text formatter
+  const validParts = [];
+  messageParts.forEach(part => {
+    const formatted = textFormatter.formatMessage(part);
+    if (formatted !== null) {
+      validParts.push(formatted);
+    } else {
+      console.log(`Filtered out action-only message: "${part}"`);
+    }
+  });
+  
+  console.log(`After filtering: ${validParts.length} valid parts:`, validParts);
   
   // If no valid message parts remain, send fallback
-  if (messageParts.length === 0) {
+  if (validParts.length === 0) {
+    console.log('All parts were filtered out, sending fallback');
     const fallbackMessage = {
       id: uuidv4(),
       text: "Let me think of another way to respond...",
@@ -150,10 +164,11 @@ const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
   }
   
   // If only one message part, send normally
-  if (messageParts.length <= 1) {
+  if (validParts.length === 1) {
+    console.log(`Sending single message: "${validParts[0]}"`);
     const aiResponse = {
       id: uuidv4(),
-      text: messageParts[0],
+      text: validParts[0],
       sender: 'ai',
       timestamp: new Date()
     };
@@ -164,8 +179,9 @@ const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
   }
   
   // Send multiple messages with delays between them
-  for (let i = 0; i < messageParts.length; i++) {
-    const part = messageParts[i];
+  console.log(`Sending ${validParts.length} messages with delays`);
+  for (let i = 0; i < validParts.length; i++) {
+    const part = validParts[i];
     
     // Add delay between messages (except for the first one)
     if (i > 0) {
@@ -193,7 +209,7 @@ const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
       timestamp: new Date()
     };
     
-    console.log(`Sending AI message part ${i + 1}/${messageParts.length} for session ${sessionId}: "${part}"`);
+    console.log(`Sending AI message part ${i + 1}/${validParts.length} for session ${sessionId}: "${part}"`);
     sessionManager.addMessage(sessionId, aiResponse);
     io.to(sessionId).emit('new-message', aiResponse);
   }
