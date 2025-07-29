@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 
 const TypingIndicator: React.FC = () => {
   const { state } = useAppContext();
+  const [showIndicator, setShowIndicator] = useState(false);
 
-  if (!state.typingState.isAITyping) {
+  // Use a small delay to prevent flickering when typing state changes rapidly
+  useEffect(() => {
+    if (state.typingState.isAITyping) {
+      setShowIndicator(true);
+    } else {
+      // Add a small delay before hiding to prevent flickering between messages
+      const hideDelay = setTimeout(() => {
+        setShowIndicator(false);
+      }, 200);
+      
+      return () => clearTimeout(hideDelay);
+    }
+  }, [state.typingState.isAITyping]);
+
+  if (!showIndicator) {
     return null;
   }
 

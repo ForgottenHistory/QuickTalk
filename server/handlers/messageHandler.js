@@ -62,18 +62,9 @@ const handleMessage = async (io, socket, sessionId, message) => {
           sender: 'ai' 
         });
         
-        const aiResponse = {
-          id: uuidv4(),
-          text: aiResponseText,
-          sender: 'ai',
-          timestamp: new Date()
-        };
+        // Split response by newlines and send as separate messages
+        await sendMultipleMessages(io, sessionId, aiResponseText, session.aiCharacter.name);
         
-        console.log(`Adding AI response to session ${sessionId}:`, aiResponse);
-        sessionManager.addMessage(sessionId, aiResponse);
-        
-        console.log(`Broadcasting AI response to room ${sessionId}`);
-        io.to(sessionId).emit('new-message', aiResponse);
       } catch (error) {
         console.error('Error generating AI response:', error);
         
@@ -96,6 +87,63 @@ const handleMessage = async (io, socket, sessionId, message) => {
     }, typingDuration);
     
   }, thinkingDelay);
+};
+
+const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
+  // Split by newlines and filter out empty lines
+  const messageParts = responseText.split('\n').filter(part => part.trim() !== '');
+  
+  console.log(`Splitting AI response into ${messageParts.length} messages for session ${sessionId}`);
+  
+  // If only one message part, send normally
+  if (messageParts.length <= 1) {
+    const aiResponse = {
+      id: uuidv4(),
+      text: responseText.trim(),
+      sender: 'ai',
+      timestamp: new Date()
+    };
+    
+    sessionManager.addMessage(sessionId, aiResponse);
+    io.to(sessionId).emit('new-message', aiResponse);
+    return;
+  }
+  
+  // Send multiple messages with delays between them
+  for (let i = 0; i < messageParts.length; i++) {
+    const part = messageParts[i].trim();
+    if (!part) continue;
+    
+    // Add delay between messages (except for the first one)
+    if (i > 0) {
+      // Show typing indicator between messages
+      io.to(sessionId).emit('typing-update', { 
+        isTyping: true, 
+        sender: 'ai' 
+      });
+      
+      // Wait 800ms - 2s between messages
+      const delayBetweenMessages = Math.random() * 1200 + 800;
+      await new Promise(resolve => setTimeout(resolve, delayBetweenMessages));
+      
+      // Stop typing before sending next message
+      io.to(sessionId).emit('typing-update', { 
+        isTyping: false, 
+        sender: 'ai' 
+      });
+    }
+    
+    const aiResponse = {
+      id: uuidv4(),
+      text: part,
+      sender: 'ai',
+      timestamp: new Date()
+    };
+    
+    console.log(`Sending AI message part ${i + 1}/${messageParts.length} for session ${sessionId}: "${part}"`);
+    sessionManager.addMessage(sessionId, aiResponse);
+    io.to(sessionId).emit('new-message', aiResponse);
+  }
 };
 
 module.exports = {
