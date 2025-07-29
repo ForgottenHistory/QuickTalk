@@ -1,16 +1,17 @@
 {
-  "name": "server",
+  "name": "quicktalk-server",
   "version": "1.0.0",
+  "description": "Backend server for Quicktalk - AI chat application",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "dev:full": "concurrently \"npm run dev\" \"cd ../client && npm start\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["chat", "ai", "websocket", "express"],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
