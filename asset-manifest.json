@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.css": "/quicktalk/static/css/main.6654081a.css",
-    "main.js": "/quicktalk/static/js/main.1e688f19.js",
-    "index.html": "/quicktalk/index.html",
-    "main.6654081a.css.map": "/quicktalk/static/css/main.6654081a.css.map",
-    "main.1e688f19.js.map": "/quicktalk/static/js/main.1e688f19.js.map"
+    "main.css": "/QuickTalk/static/css/main.6654081a.css",
+    "main.js": "/QuickTalk/static/js/main.1e688f19.js",
+    "index.html": "/QuickTalk/index.html",
+    "main.6654081a.css.map": "/QuickTalk/static/css/main.6654081a.css.map",
+    "main.1e688f19.js.map": "/QuickTalk/static/js/main.1e688f19.js.map"
   },
   "entrypoints": [
     "static/css/main.6654081a.css",
