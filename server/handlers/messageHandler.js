@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const sessionManager = require('../managers/sessionManager');
 const aiService = require('../services/aiService');
+const textFormatter = require('../services/textFormatter'); // ADD THIS LINE
 
 const handleMessage = async (io, socket, sessionId, message) => {
   console.log(`Received message for session ${sessionId}: "${message}"`);
@@ -62,9 +63,21 @@ const handleMessage = async (io, socket, sessionId, message) => {
           sender: 'ai' 
         });
         
-        // Clean and split response by newlines and send as separate messages
-        const cleanedResponse = cleanResponse(aiResponseText);
-        await sendMultipleMessages(io, sessionId, cleanedResponse, session.aiCharacter.name);
+        // Clean and format response, then send as messages
+        const formattedResponse = formatAIResponse(aiResponseText);
+        if (formattedResponse) {
+          await sendMultipleMessages(io, sessionId, formattedResponse, session.aiCharacter.name);
+        } else {
+          // If entire response was filtered out, send a fallback
+          const fallbackResponse = {
+            id: uuidv4(),
+            text: "Let me rephrase that...",
+            sender: 'ai',
+            timestamp: new Date()
+          };
+          sessionManager.addMessage(sessionId, fallbackResponse);
+          io.to(sessionId).emit('new-message', fallbackResponse);
+        }
         
       } catch (error) {
         console.error('Error generating AI response:', error);
@@ -90,43 +103,58 @@ const handleMessage = async (io, socket, sessionId, message) => {
   }, thinkingDelay);
 };
 
-const cleanResponse = (responseText) => {
+// REPLACE the cleanResponse function with this:
+const formatAIResponse = (responseText) => {
   if (!responseText || typeof responseText !== 'string') {
-    return '';
+    return null;
   }
   
-  // First, trim the entire response
-  let cleaned = responseText.trim();
+  // First format the entire response
+  const formattedText = textFormatter.formatMessage(responseText);
   
-  // Replace multiple consecutive newlines with single newlines
-  // This handles cases like \n\n\n or \r\n\r\n
+  // If entire response was an action, return null
+  if (!formattedText) {
+    return null;
+  }
+  
+  // Clean up multiple newlines and whitespace
+  let cleaned = formattedText.trim();
   cleaned = cleaned.replace(/[\r\n]{3,}/g, '\n\n');
-  
-  // Replace double newlines with single newlines (converts paragraph breaks to message breaks)
   cleaned = cleaned.replace(/\n\n+/g, '\n');
-  
-  // Remove any remaining carriage returns
   cleaned = cleaned.replace(/\r/g, '');
   
-  console.log(`Original response: "${responseText}"`);
-  console.log(`Cleaned response: "${cleaned}"`);
-  
+  console.log(`Formatted AI response: "${cleaned}"`);
   return cleaned;
 };
 
 const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
-  // Split by newlines and filter out empty/whitespace-only lines
+  // Split by newlines and process each part
   const messageParts = responseText.split('\n')
     .map(part => part.trim())
-    .filter(part => part.length > 0);
+    .filter(part => part.length > 0)
+    .map(part => textFormatter.formatMessage(part)) // Format each part
+    .filter(part => part !== null); // Remove parts that were entirely actions
   
   console.log(`Splitting AI response into ${messageParts.length} messages for session ${sessionId}`);
+  
+  // If no valid message parts remain, send fallback
+  if (messageParts.length === 0) {
+    const fallbackMessage = {
+      id: uuidv4(),
+      text: "Let me think of another way to respond...",
+      sender: 'ai',
+      timestamp: new Date()
+    };
+    sessionManager.addMessage(sessionId, fallbackMessage);
+    io.to(sessionId).emit('new-message', fallbackMessage);
+    return;
+  }
   
   // If only one message part, send normally
   if (messageParts.length <= 1) {
     const aiResponse = {
       id: uuidv4(),
-      text: responseText.trim(),
+      text: messageParts[0],
       sender: 'ai',
       timestamp: new Date()
     };
