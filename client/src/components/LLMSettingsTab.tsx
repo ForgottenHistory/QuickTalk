@@ -1,35 +1,35 @@
 import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
-import { 
-  SettingField, 
-  NumberInput, 
-  SelectInput, 
-  CheckboxInput, 
-  RangeInput, 
-  ResetButton 
+import {
+  SettingField,
+  NumberInput,
+  SelectInput,
+  CheckboxInput,
+  RangeInput,
+  ResetButton
 } from './SettingField';
 
 const LLMSettingsTab: React.FC = () => {
   const { settings, dispatch, resetLLMSettings } = useSettingsContext();
 
   const updateString = (key: string, value: string) => {
-    dispatch({ 
-      type: 'UPDATE_LLM_SETTINGS_LOCAL', 
-      payload: { [key]: value } 
+    dispatch({
+      type: 'UPDATE_LLM_SETTINGS_LOCAL',
+      payload: { [key]: value }
     });
   };
 
   const updateNumber = (key: string, value: number) => {
-    dispatch({ 
-      type: 'UPDATE_LLM_SETTINGS_LOCAL', 
-      payload: { [key]: value } 
+    dispatch({
+      type: 'UPDATE_LLM_SETTINGS_LOCAL',
+      payload: { [key]: value }
     });
   };
 
   const updateBoolean = (key: string, value: boolean) => {
-    dispatch({ 
-      type: 'UPDATE_LLM_SETTINGS_LOCAL', 
-      payload: { [key]: value } 
+    dispatch({
+      type: 'UPDATE_LLM_SETTINGS_LOCAL',
+      payload: { [key]: value }
     });
   };
 
@@ -135,8 +135,8 @@ const LLMSettingsTab: React.FC = () => {
                 placeholder="Enter your custom system prompt here..."
                 className="form-input form-textarea"
                 rows={6}
-                style={{ 
-                  fontFamily: 'monospace', 
+                style={{
+                  fontFamily: 'monospace',
                   fontSize: '13px',
                   resize: 'vertical'
                 }}
@@ -153,8 +153,8 @@ const LLMSettingsTab: React.FC = () => {
                 placeholder="{{#if system}}{{system}}\n\n# **Roleplay Context**\n{{/if}}..."
                 className="form-input form-textarea"
                 rows={8}
-                style={{ 
-                  fontFamily: 'monospace', 
+                style={{
+                  fontFamily: 'monospace',
                   fontSize: '12px',
                   resize: 'vertical'
                 }}
@@ -171,8 +171,8 @@ const LLMSettingsTab: React.FC = () => {
                 placeholder="e.g., 'Keep responses under 100 words', 'Use a formal tone', 'Focus on practical advice'..."
                 className="form-input form-textarea"
                 rows={3}
-                style={{ 
-                  fontFamily: 'monospace', 
+                style={{
+                  fontFamily: 'monospace',
                   fontSize: '13px',
                   resize: 'vertical'
                 }}
@@ -183,21 +183,21 @@ const LLMSettingsTab: React.FC = () => {
       </div>
 
       <div className="performance-info">
-        <h4>💡 Custom Prompt Tips</h4>
-        <ul>
-          <li><strong>System Prompt:</strong> Defines the AI's core personality and behavior</li>
-          <li><strong>Context Template:</strong> Controls how character info is structured</li>
-          <li><strong>Author's Note:</strong> Fine-tune responses without changing the main prompt</li>
-          <li>Use the Prompt Inspector to see how your changes affect the final prompt</li>
-          <li>Custom prompts work with the context template for full control</li>
-        </ul>
-        
         <h4>🎭 Template Variables</h4>
         <ul>
           <li><code>{'{{system}}'}</code> - System prompt (custom or default character prompt)</li>
           <li><code>{'{{char}}'}</code> - Character name</li>
           <li><code>{'{{description}}'}</code> - Character description</li>
           <li><code>{'{{personality}}'}</code> - Character personality</li>
+          <li><code>{'{{sessionDuration}}'}</code> - Session duration in minutes</li>
+          <li><code>{'{{extensionDuration}}'}</code> - Extension duration in minutes</li>
+          <li><code>{'{{extensionWarningTime}}'}</code> - Extension warning time in minutes</li>
+          <li><code>{'{{timeRemaining}}'}</code> - Time remaining (formatted, e.g. "5 minutes and 30 seconds")</li>
+          <li><code>{'{{timeMinutes}}'}</code> - Minutes remaining (number)</li>
+          <li><code>{'{{timeSeconds}}'}</code> - Seconds remaining (number)</li>
+          <li><code>{'{{timeGuidance}}'}</code> - Time-based guidance text</li>
+          <li><code>{'{{responseLength}}'}</code> - Response length setting</li>
+          <li><code>{'{{maxTokens}}'}</code> - Max tokens setting</li>
           <li><code>{'{{#if variable}}...{{/if}}'}</code> - Conditional blocks</li>
         </ul>
       </div>

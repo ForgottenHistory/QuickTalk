@@ -106,42 +106,80 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const getSystemPromptFromTemplate = (): string => {
     if (!state.aiCharacter) return '';
 
-    console.log('Current aiCharacter data:', JSON.stringify(state.aiCharacter, null, 2));
-
     // Get system prompt (custom or default)
     let systemPrompt;
-    if (settings.llmSettings.systemPromptCustomization &&
-      settings.llmSettings.customSystemPrompt &&
-      settings.llmSettings.customSystemPrompt.trim()) {
+    if (settings.llmSettings.systemPromptCustomization && 
+        settings.llmSettings.customSystemPrompt && 
+        settings.llmSettings.customSystemPrompt.trim()) {
       systemPrompt = settings.llmSettings.customSystemPrompt;
     } else {
       systemPrompt = getDefaultCharacterPrompt();
     }
-
+    
     // Get the context template
     const template = settings.llmSettings.contextTemplate || '';
-
-    // Prepare template data
+    
+    // Calculate time variables
+    const totalSeconds = state.timer.minutes * 60 + state.timer.seconds;
+    let timeMinutes = 0;
+    let timeSeconds = 0;
+    let timeFormatted = '';
+    let timeGuidance = '';
+    
+    if (state.timer.isActive && totalSeconds > 0) {
+      timeMinutes = Math.floor(totalSeconds / 60);
+      timeSeconds = totalSeconds % 60;
+      
+      if (timeMinutes > 0) {
+        timeFormatted = `${timeMinutes} minute${timeMinutes !== 1 ? 's' : ''}${timeSeconds > 0 ? ` and ${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}` : ''}`;
+      } else {
+        timeFormatted = `${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}`;
+      }
+      
+      // Generate time-based guidance
+      if (timeMinutes <= 2) {
+        timeGuidance = 'The conversation is nearing its end. You may naturally acknowledge this and express whether you\'d be interested in extending the chat if you\'re enjoying it.';
+      } else if (timeMinutes <= 5) {
+        timeGuidance = 'The conversation is in its later stages. Continue engaging meaningfully.';
+      }
+    }
+    
+    // Prepare template data with all available variables
     const templateData: Record<string, any> = {
+      // Character variables
       system: systemPrompt,
       char: state.aiCharacter.name,
-      description: state.aiCharacter.description, // Use the description field
-      personality: state.aiCharacter.personality, // Short personality summary
-      // examples: '', // For future use
+      description: state.aiCharacter.description,
+      personality: state.aiCharacter.personality,
+      
+      // Session variables
+      sessionDuration: settings.appSettings.sessionDuration.toString(),
+      extensionDuration: settings.appSettings.extensionDuration.toString(),
+      extensionWarningTime: settings.appSettings.extensionWarningTime.toString(),
+      
+      // Time variables
+      timeRemaining: timeFormatted,
+      timeMinutes: timeMinutes.toString(),
+      timeSeconds: timeSeconds.toString(),
+      timeGuidance: timeGuidance,
+      
+      // Response length
+      responseLength: settings.llmSettings.responseLength,
+      maxTokens: settings.llmSettings.maxTokens.toString(),
     };
-
-    //console.log('Template data:', JSON.stringify(templateData, null, 2));
-
+    
+    console.log('Frontend template data:', JSON.stringify(templateData, null, 2));
+    
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
       delete templateData.description;
     }
-
-    //console.log('Final template data:', JSON.stringify(templateData, null, 2));
-
+    
+    console.log('Final template data:', JSON.stringify(templateData, null, 2));
+    
     const result = renderTemplate(template, templateData);
     console.log('Rendered template result:', result);
-
+    
     return result;
   };
 

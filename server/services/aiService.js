@@ -91,16 +91,57 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
     // Get the context template
     const template = settingsManager.getContextTemplate();
     
-    // Prepare template data
+    // Calculate time variables
+    let timeMinutes = 0;
+    let timeSeconds = 0;
+    let timeFormatted = '';
+    let timeGuidance = '';
+    
+    if (timeRemaining !== null && timeRemaining > 0) {
+      timeMinutes = Math.floor(timeRemaining / 60);
+      timeSeconds = timeRemaining % 60;
+      
+      if (timeMinutes > 0) {
+        timeFormatted = `${timeMinutes} minute${timeMinutes !== 1 ? 's' : ''}${timeSeconds > 0 ? ` and ${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}` : ''}`;
+      } else {
+        timeFormatted = `${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}`;
+      }
+      
+      // Generate time-based guidance
+      if (timeMinutes <= 2) {
+        timeGuidance = 'The conversation is nearing its end. You may naturally acknowledge this and express whether you\'d be interested in extending the chat if you\'re enjoying it.';
+      } else if (timeMinutes <= 5) {
+        timeGuidance = 'The conversation is in its later stages. Continue engaging meaningfully.';
+      }
+    }
+    
+    // Prepare template data with all available variables
     const templateData = {
+      // Character variables
       system: systemPrompt,
       char: character.name,
-      description: character.description, // Use the full description field
-      personality: character.personality, // Short personality summary
+      description: character.description,
+      personality: character.personality,
+      
+      // Session variables
+      sessionDuration: settingsManager.getSessionDuration(),
+      extensionDuration: settingsManager.getExtensionDuration(),
+      extensionWarningTime: settingsManager.getExtensionWarningTime(),
+      
+      // Time variables
+      timeRemaining: timeFormatted,
+      timeMinutes: timeMinutes.toString(),
+      timeSeconds: timeSeconds.toString(),
+      timeGuidance: timeGuidance,
+      
+      // Response length
+      responseLength: settingsManager.getResponseLength(),
+      maxTokens: settingsManager.getMaxTokens().toString(),
+      
       // examples: character.examples || '', // For future use
     };
     
-    console.log('Template data:', JSON.stringify(templateData, null, 2));
+    console.log('Template data with time variables:', JSON.stringify(templateData, null, 2));
     
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
