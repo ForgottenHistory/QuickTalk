@@ -13,6 +13,12 @@ const socketHandler = (io) => {
         socket.join(sessionId);
         socket.sessionId = sessionId;
         socket.emit('session-joined', session);
+        
+        // Send first message if this is a new session (no messages yet)
+        if (session.messages.length === 0) {
+          console.log(`New session ${sessionId}, considering first message from ${session.aiCharacter.name}`);
+          messageHandler.sendFirstMessage(io, sessionId, session.aiCharacter);
+        }
       } else {
         socket.emit('error', { message: 'Session not found' });
       }
@@ -22,7 +28,7 @@ const socketHandler = (io) => {
       await messageHandler.handleMessage(io, socket, sessionId, message);
     });
     
-    // NEW: Handle typing status
+    // Handle typing status
     socket.on('typing-status', ({ sessionId, isTyping, sender }) => {
       const session = sessionManager.getSession(sessionId);
       if (session) {

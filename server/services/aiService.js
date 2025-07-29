@@ -1,6 +1,6 @@
 const OpenAI = require('openai');
 const settingsManager = require('../managers/settingsManager');
-const tokenCounter = require('./tokenCounter'); // ADD THIS LINE
+const tokenCounter = require('./tokenCounter');
 
 class AIService {
   constructor() {
@@ -165,15 +165,30 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
       return "I'm not properly configured. Please check the server settings.";
     }
 
+    // Check if this is a first message generation (special prompt)
+    const isFirstMessage = userMessage.includes('This is the start of a new conversation') && 
+                           conversationHistory.length === 0;
+
     try {
-      const systemPrompt = this.buildContextFromTemplate(character, timeRemaining);
+      let systemPrompt;
+      
+      if (isFirstMessage) {
+        // For first messages, use a simpler, more direct prompt
+        systemPrompt = `You are ${character.name}. ${character.personality}
+
+Send a brief, natural greeting that matches your personality. Be friendly and welcoming, but keep it conversational and under 50 words. Don't mention time limits or explain the platform.`;
+      } else {
+        // Use the normal system prompt for regular messages
+        systemPrompt = this.buildContextFromTemplate(character, timeRemaining);
+      }
+
       const authorsNote = settingsManager.getAuthorsNote();
 
       // Calculate available tokens for conversation history
       const memoryTokenLimit = settingsManager.getMemoryTokens();
 
-      // Get messages that fit within token limit
-      const recentHistory = tokenCounter.getMessagesWithinTokenLimit(
+      // Get messages that fit within token limit (skip for first messages)
+      const recentHistory = isFirstMessage ? [] : tokenCounter.getMessagesWithinTokenLimit(
         conversationHistory,
         memoryTokenLimit
       );
@@ -182,42 +197,46 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
         { role: 'system', content: systemPrompt }
       ];
 
-      // Add conversation history within token limit
-      recentHistory.forEach(msg => {
-        messages.push({
-          role: msg.sender === 'user' ? 'user' : 'assistant',
-          content: msg.text
+      // Add conversation history within token limit (skip for first messages)
+      if (!isFirstMessage) {
+        recentHistory.forEach(msg => {
+          messages.push({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.text
+          });
         });
-      });
+      }
 
       // Add current user message
       messages.push({ role: 'user', content: userMessage });
 
-      // Add author's note as system message if provided
-      if (authorsNote.trim()) {
+      // Add author's note as system message if provided (not for first messages)
+      if (!isFirstMessage && authorsNote.trim()) {
         messages.push({
           role: 'system',
           content: `[Style: ${authorsNote}]`
         });
       }
 
-      // Debug token usage
-      const debugInfo = tokenCounter.debugTokenUsage(
-        [...recentHistory, { text: userMessage, sender: 'user' }],
-        systemPrompt,
-        authorsNote
-      );
+      // Debug token usage (skip for first messages to reduce log spam)
+      if (!isFirstMessage) {
+        const debugInfo = tokenCounter.debugTokenUsage(
+          [...recentHistory, { text: userMessage, sender: 'user' }],
+          systemPrompt,
+          authorsNote
+        );
 
-      console.log(`Using ${recentHistory.length}/${conversationHistory.length} messages within ${memoryTokenLimit} token limit`);
-      console.log(`Total estimated tokens: ${debugInfo.total}/${settingsManager.getContextLength()}`);
-      console.log('Recent messages included in context:', recentHistory.map(m => `${m.sender}: ${m.text.substring(0, 50)}...`));
+        console.log(`Using ${recentHistory.length}/${conversationHistory.length} messages within ${memoryTokenLimit} token limit`);
+        console.log(`Total estimated tokens: ${debugInfo.total}/${settingsManager.getContextLength()}`);
+        console.log('Recent messages included in context:', recentHistory.map(m => `${m.sender}: ${m.text.substring(0, 50)}...`));
+      }
 
       // Get current settings
       const model = settingsManager.getLLMModel();
       const temperature = settingsManager.getTemperature();
-      const maxTokens = settingsManager.getMaxTokens();
+      const maxTokens = isFirstMessage ? 100 : settingsManager.getMaxTokens(); // Shorter for first messages
 
-      console.log(`Using model: ${model}, temp: ${temperature}, maxTokens: ${maxTokens}`);
+      console.log(`Using model: ${model}, temp: ${temperature}, maxTokens: ${maxTokens}${isFirstMessage ? ' (first message)' : ''}`);
 
       const chatCompletion = await this.openai.chat.completions.create({
         model: model,
@@ -232,11 +251,24 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
         return response.trim();
       } else {
         console.error('Invalid AI response:', response);
-        return "I'm having trouble responding right now. Could you try again?";
+        return isFirstMessage ? 
+          `Hello! I'm ${character.name}. Nice to meet you!` :
+          "I'm having trouble responding right now. Could you try again?";
       }
     } catch (error) {
-      console.error('AI Service Error:', error.message);
-      return "I'm experiencing some technical difficulties. Please try again in a moment.";
+      console.error('AI Service Error:', error.message || error);
+      
+      // Handle rate limiting specifically
+      if (error.message && error.message.includes('429')) {
+        console.log('Rate limit hit, using fallback response');
+        return isFirstMessage ?
+          `Hi there! I'm ${character.name}. How are you doing today?` :
+          "I'm getting a lot of requests right now. Could you try again in a moment?";
+      }
+      
+      return isFirstMessage ?
+        `Hi there! I'm ${character.name}. How are you doing today?` :
+        "I'm experiencing some technical difficulties. Please try again in a moment.";
     }
   }
 

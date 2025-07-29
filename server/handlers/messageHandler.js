@@ -3,6 +3,10 @@ const sessionManager = require('../managers/sessionManager');
 const aiService = require('../services/aiService');
 const textFormatter = require('../services/textFormatter');
 
+// Track last API call time to avoid rate limiting
+let lastApiCall = 0;
+const MIN_DELAY_BETWEEN_CALLS = 2000; // 2 seconds minimum between API calls
+
 const handleMessage = async (io, socket, sessionId, message) => {
   console.log(`Received message for session ${sessionId}: "${message}"`);
   
@@ -88,6 +92,142 @@ const handleMessage = async (io, socket, sessionId, message) => {
     }, typingDuration);
     
   }, thinkingDelay);
+};
+
+const sendFirstMessage = async (io, sessionId, aiCharacter) => {
+  // 70% chance to send a first message
+  const shouldSendFirst = Math.random() < 0.7;
+  
+  if (!shouldSendFirst) {
+    console.log(`AI ${aiCharacter.name} chose not to send first message for session ${sessionId}`);
+    return;
+  }
+
+  console.log(`AI ${aiCharacter.name} will send first message for session ${sessionId}`);
+
+  // Check rate limiting - add extra delay if needed
+  const now = Date.now();
+  const timeSinceLastCall = now - lastApiCall;
+  const additionalDelay = Math.max(0, MIN_DELAY_BETWEEN_CALLS - timeSinceLastCall);
+  
+  // Delay before sending first message (1-3 seconds + rate limit protection)
+  const initialDelay = Math.random() * 2000 + 1000 + additionalDelay;
+  
+  setTimeout(async () => {
+    const session = sessionManager.getSession(sessionId);
+    if (!session || !session.isActive) {
+      console.log(`Session ${sessionId} no longer active, skipping first message`);
+      return;
+    }
+
+    // Show typing indicator
+    io.to(sessionId).emit('typing-update', { 
+      isTyping: true, 
+      sender: 'ai' 
+    });
+
+    // Typing duration for first message (1-2.5 seconds)
+    const typingDuration = Math.random() * 1500 + 1000;
+
+    setTimeout(async () => {
+      try {
+        // Update last API call time
+        lastApiCall = Date.now();
+        
+        // Generate first message
+        const firstMessagePrompt = `You are ${aiCharacter.name}. ${aiCharacter.personality}. 
+
+This is the start of a new conversation. Send a brief, friendly greeting that matches your personality. Keep it natural and conversational. Keep it under 50 words and match your personality.`;
+
+        console.log(`Generating first message for ${aiCharacter.name} in session ${sessionId}`);
+        
+        const aiResponseText = await aiService.generateResponse(
+          aiCharacter,
+          firstMessagePrompt,
+          [], // No conversation history for first message
+          session.timeRemaining
+        );
+
+        // Stop typing indicator
+        io.to(sessionId).emit('typing-update', { 
+          isTyping: false, 
+          sender: 'ai' 
+        });
+
+        console.log(`First message generated for session ${sessionId}: "${aiResponseText}"`);
+
+        // Send the first message (use single message, not multiple)
+        if (aiResponseText && aiResponseText.trim()) {
+          // Clean up the response
+          let cleaned = aiResponseText.trim();
+          
+          // Apply text formatter
+          const formatted = textFormatter.formatMessage(cleaned);
+          
+          if (formatted) {
+            const firstMessage = {
+              id: uuidv4(),
+              text: formatted,
+              sender: 'ai',
+              timestamp: new Date()
+            };
+
+            sessionManager.addMessage(sessionId, firstMessage);
+            io.to(sessionId).emit('new-message', firstMessage);
+            
+            console.log(`First message sent for session ${sessionId}: "${formatted}"`);
+          } else {
+            console.log(`First message was filtered out for session ${sessionId}, sending fallback`);
+            // Send fallback if formatted message was filtered
+            const fallbackMessage = {
+              id: uuidv4(),
+              text: `Hello! I'm ${aiCharacter.name}. Nice to meet you!`,
+              sender: 'ai',
+              timestamp: new Date()
+            };
+            
+            sessionManager.addMessage(sessionId, fallbackMessage);
+            io.to(sessionId).emit('new-message', fallbackMessage);
+          }
+        } else {
+          console.log(`Empty first message generated for session ${sessionId}, sending fallback`);
+          // Send fallback if no message generated
+          const fallbackMessage = {
+            id: uuidv4(),
+            text: `Hi there! I'm ${aiCharacter.name}. How are you doing today?`,
+            sender: 'ai',
+            timestamp: new Date()
+          };
+          
+          sessionManager.addMessage(sessionId, fallbackMessage);
+          io.to(sessionId).emit('new-message', fallbackMessage);
+        }
+
+      } catch (error) {
+        console.error('Error generating first message:', error);
+        
+        // Stop typing indicator on error
+        io.to(sessionId).emit('typing-update', { 
+          isTyping: false, 
+          sender: 'ai' 
+        });
+        
+        // Send a simple fallback first message
+        const fallbackMessage = {
+          id: uuidv4(),
+          text: `Hello! I'm ${aiCharacter.name}. Nice to meet you!`,
+          sender: 'ai',
+          timestamp: new Date()
+        };
+        
+        sessionManager.addMessage(sessionId, fallbackMessage);
+        io.to(sessionId).emit('new-message', fallbackMessage);
+        
+        console.log(`Sent fallback first message for session ${sessionId}`);
+      }
+    }, typingDuration);
+
+  }, initialDelay);
 };
 
 const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
@@ -216,5 +356,6 @@ const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
 };
 
 module.exports = {
-  handleMessage
+  handleMessage,
+  sendFirstMessage
 };
