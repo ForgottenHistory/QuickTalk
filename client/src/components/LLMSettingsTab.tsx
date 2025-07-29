@@ -187,6 +187,9 @@ const LLMSettingsTab: React.FC = () => {
         <ul>
           <li><code>{'{{system}}'}</code> - System prompt (custom or default character prompt)</li>
           <li><code>{'{{char}}'}</code> - Character name</li>
+          <li><code>{'{{character}}'}</code> - Character name (alias)</li>
+          <li><code>{'{{name}}'}</code> - Character name (alias)</li>
+          <li><code>{'{{user}}'}</code> - User reference ("Human")</li>
           <li><code>{'{{description}}'}</code> - Character description</li>
           <li><code>{'{{personality}}'}</code> - Character personality</li>
           <li><code>{'{{sessionDuration}}'}</code> - Session duration in minutes</li>
@@ -199,6 +202,13 @@ const LLMSettingsTab: React.FC = () => {
           <li><code>{'{{responseLength}}'}</code> - Response length setting</li>
           <li><code>{'{{maxTokens}}'}</code> - Max tokens setting</li>
           <li><code>{'{{#if variable}}...{{/if}}'}</code> - Conditional blocks</li>
+        </ul>
+
+        <h4>📝 Character Card Compatibility</h4>
+        <ul>
+          <li>Supports common variables like <code>{'{{char}}'}</code> and <code>{'{{user}}'}</code> found in imported character cards</li>
+          <li>Character descriptions and system prompts from imported cards will render properly</li>
+          <li>Multiple name aliases (<code>{'{{char}}'}</code>, <code>{'{{character}}'}</code>, <code>{'{{name}}'}</code>) for maximum compatibility</li>
         </ul>
       </div>
 

@@ -36,7 +36,7 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     if (!isVisible || !state.aiCharacter) return;
 
     const blocks: PromptBlock[] = [];
-    
+
     // 1. System Prompt (using template)
     const systemPrompt = getSystemPromptFromTemplate();
     if (systemPrompt) {
@@ -76,13 +76,13 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     setPromptBlocks(blocks);
     setTotalTokens(blocks.reduce((sum, block) => sum + (block.tokens || 0), 0));
   }, [
-    isVisible, 
-    state.aiCharacter, 
-    state.messages, 
+    isVisible,
+    state.aiCharacter,
+    state.messages,
     state.timer.minutes, // Add timer dependency
     state.timer.seconds, // Add timer dependency  
     state.timer.isActive, // Add timer dependency
-    currentUserMessage, 
+    currentUserMessage,
     settings.llmSettings
   ]);
 
@@ -112,17 +112,17 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     let timeSeconds = 0;
     let timeFormatted = '';
     let timeGuidance = '';
-    
+
     if (state.timer.isActive && totalSeconds > 0) {
       timeMinutes = Math.floor(totalSeconds / 60);
       timeSeconds = totalSeconds % 60;
-      
+
       if (timeMinutes > 0) {
         timeFormatted = `${timeMinutes} minute${timeMinutes !== 1 ? 's' : ''}${timeSeconds > 0 ? ` and ${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}` : ''}`;
       } else {
         timeFormatted = `${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}`;
       }
-      
+
       // Generate time-based guidance
       if (timeMinutes <= 2) {
         timeGuidance = 'The conversation is nearing its end. You may naturally acknowledge this and express whether you\'d be interested in extending the chat if you\'re enjoying it.';
@@ -130,25 +130,30 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
         timeGuidance = 'The conversation is in its later stages. Continue engaging meaningfully.';
       }
     }
-    
+
     // Prepare template data with all available variables
     const templateData: Record<string, any> = {
-      // Character variables
+      // Character variables (standard format)
       char: state.aiCharacter.name,
       description: state.aiCharacter.description,
       personality: state.aiCharacter.personality,
-      
+
+      // Common character card aliases
+      character: state.aiCharacter.name,
+      name: state.aiCharacter.name,
+      user: 'Human', // Standard user reference
+
       // Session variables
       sessionDuration: settings.appSettings.sessionDuration.toString(),
       extensionDuration: settings.appSettings.extensionDuration.toString(),
       extensionWarningTime: settings.appSettings.extensionWarningTime.toString(),
-      
+
       // Time variables
       timeRemaining: timeFormatted,
       timeMinutes: timeMinutes.toString(),
       timeSeconds: timeSeconds.toString(),
       timeGuidance: timeGuidance,
-      
+
       // Response length
       responseLength: settings.llmSettings.responseLength,
       maxTokens: settings.llmSettings.maxTokens.toString(),
@@ -156,34 +161,34 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
 
     // Get system prompt (custom or default) and apply template processing
     let systemPrompt;
-    if (settings.llmSettings.systemPromptCustomization && 
-        settings.llmSettings.customSystemPrompt && 
-        settings.llmSettings.customSystemPrompt.trim()) {
+    if (settings.llmSettings.systemPromptCustomization &&
+      settings.llmSettings.customSystemPrompt &&
+      settings.llmSettings.customSystemPrompt.trim()) {
       // Apply template processing to custom system prompt
       const customPromptTemplate = settings.llmSettings.customSystemPrompt;
       systemPrompt = renderTemplate(customPromptTemplate, templateData);
     } else {
       systemPrompt = getDefaultCharacterPrompt();
     }
-    
+
     // Add system prompt to template data for context template
     templateData.system = systemPrompt;
-    
+
     // Get the context template
     const template = settings.llmSettings.contextTemplate || '';
-    
+
     console.log('Frontend template data with processed system prompt:', JSON.stringify(templateData, null, 2));
-    
+
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
       delete templateData.description;
     }
-    
+
     console.log('Final template data:', JSON.stringify(templateData, null, 2));
-    
+
     const result = renderTemplate(template, templateData);
     console.log('Rendered template result:', result);
-    
+
     return result;
   };
 

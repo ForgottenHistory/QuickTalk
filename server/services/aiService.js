@@ -85,17 +85,17 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
     let timeSeconds = 0;
     let timeFormatted = '';
     let timeGuidance = '';
-    
+
     if (timeRemaining !== null && timeRemaining > 0) {
       timeMinutes = Math.floor(timeRemaining / 60);
       timeSeconds = timeRemaining % 60;
-      
+
       if (timeMinutes > 0) {
         timeFormatted = `${timeMinutes} minute${timeMinutes !== 1 ? 's' : ''}${timeSeconds > 0 ? ` and ${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}` : ''}`;
       } else {
         timeFormatted = `${timeSeconds} second${timeSeconds !== 1 ? 's' : ''}`;
       }
-      
+
       // Generate time-based guidance
       if (timeMinutes <= 2) {
         timeGuidance = 'The conversation is nearing its end. You may naturally acknowledge this and express whether you\'d be interested in extending the chat if you\'re enjoying it.';
@@ -103,30 +103,35 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
         timeGuidance = 'The conversation is in its later stages. Continue engaging meaningfully.';
       }
     }
-    
+
     // Prepare template data with all available variables
     const templateData = {
-      // Character variables
+      // Character variables (standard format)
       char: character.name,
       description: character.description,
       personality: character.personality,
-      
+
+      // Common character card aliases
+      character: character.name,
+      name: character.name,
+      user: 'Human', // Standard user reference
+
       // Session variables
       sessionDuration: settingsManager.getSessionDuration(),
       extensionDuration: settingsManager.getExtensionDuration(),
       extensionWarningTime: settingsManager.getExtensionWarningTime(),
-      
+
       // Time variables
       timeRemaining: timeFormatted,
       timeMinutes: timeMinutes.toString(),
       timeSeconds: timeSeconds.toString(),
       timeGuidance: timeGuidance,
-      
+
       // Response length
       responseLength: settingsManager.getResponseLength(),
       maxTokens: settingsManager.getMaxTokens().toString(),
     };
-    
+
     // Get system prompt (custom or default) and apply template processing
     let systemPrompt;
     if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
@@ -136,20 +141,20 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
     } else {
       systemPrompt = this.getDefaultSystemPrompt(character, timeRemaining);
     }
-    
+
     // Add system prompt to template data for context template
     templateData.system = systemPrompt;
-    
+
     // Get the context template
     const template = settingsManager.getContextTemplate();
-    
+
     console.log('Template data with processed system prompt:', JSON.stringify(templateData, null, 2));
-    
+
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
       delete templateData.description;
     }
-    
+
     return this.renderTemplate(template, templateData);
   }
 
@@ -161,7 +166,7 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
 
     try {
       const systemPrompt = this.buildContextFromTemplate(character, timeRemaining);
-      
+
       const messages = [
         { role: 'system', content: systemPrompt }
       ];
@@ -181,8 +186,8 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
       // Add author's note as system message if provided
       const authorsNote = settingsManager.getAuthorsNote();
       if (authorsNote.trim()) {
-        messages.push({ 
-          role: 'system', 
+        messages.push({
+          role: 'system',
           content: `[Style: ${authorsNote}]`
         });
       }
