@@ -1,30 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 
 const TypingIndicator: React.FC = () => {
   const { state } = useAppContext();
-  const [showIndicator, setShowIndicator] = useState(false);
+  const indicatorRef = useRef<HTMLDivElement>(null);
 
-  // Use a small delay to prevent flickering when typing state changes rapidly
+  // Scroll into view when typing indicator appears or disappears
   useEffect(() => {
-    if (state.typingState.isAITyping) {
-      setShowIndicator(true);
-    } else {
-      // Add a small delay before hiding to prevent flickering between messages
-      const hideDelay = setTimeout(() => {
-        setShowIndicator(false);
-      }, 200);
-      
-      return () => clearTimeout(hideDelay);
+    if (indicatorRef.current) {
+      indicatorRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [state.typingState.isAITyping]);
 
-  if (!showIndicator) {
+  if (!state.typingState.isAITyping) {
     return null;
   }
 
   return (
-    <div className="message message-ai">
+    <div ref={indicatorRef} className="message message-ai">
       <div className="message-bubble message-bubble-ai typing-indicator">
         <div className="typing-dots">
           <div className="typing-dot" />
