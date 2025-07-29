@@ -322,7 +322,7 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
 
       // Check if adding this message would exceed the limit
       if (totalTokens + messageTokens > memoryTokenLimit) {
-        console.log(`Prompt Inspector: Excluding older message due to token limit (${totalTokens + messageTokens} > ${memoryTokenLimit})`);
+        //console.log(`Prompt Inspector: Excluding older message due to token limit (${totalTokens + messageTokens} > ${memoryTokenLimit})`);
         break;
       }
 
@@ -330,7 +330,7 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
       totalTokens += messageTokens;
     }
 
-    console.log(`Prompt Inspector: Using ${result.length}/${state.messages.length} messages within ${memoryTokenLimit} token limit (${totalTokens} tokens)`);
+    //console.log(`Prompt Inspector: Using ${result.length}/${state.messages.length} messages within ${memoryTokenLimit} token limit (${totalTokens} tokens)`);
 
     const historyParts: string[] = [];
 
