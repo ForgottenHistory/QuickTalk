@@ -11,7 +11,8 @@ const handleExtension = async (socket, sessionId, decision) => {
   try {
     console.log(`Extension request for session ${sessionId}: user=${decision}`);
     
-    // Get AI decision based on conversation
+    // Get AI decision immediately when user makes their choice
+    console.log(`Getting AI decision for session ${sessionId}...`);
     const aiDecision = await aiService.generateExtensionDecision(
       session.aiCharacter, 
       session.messages
@@ -19,28 +20,25 @@ const handleExtension = async (socket, sessionId, decision) => {
     
     console.log(`AI decision for session ${sessionId}: ai=${aiDecision}`);
     
-    // Send response to client
+    // Send response to client with both decisions
     socket.emit('extension-response', {
       userDecision: decision,
       aiDecision,
       success: decision === 'extend' && aiDecision === 'extend'
     });
     
-    if (decision === 'extend' && aiDecision === 'extend') {
-      // Both want to extend - extend the session
-      console.log(`Extending session ${sessionId}`);
-      sessionManager.extendSession(sessionId);
-    } else {
-      // Either party declined - end session
-      console.log(`Ending session ${sessionId} due to extension decline`);
-      sessionManager.endSession(sessionId);
-      
-      // Emit session-ended event to trigger new AI connection
-      socket.emit('session-ended');
-    }
+    // The actual session extension/ending will be handled by the frontend
+    // after showing the appropriate message to the user
+    
   } catch (error) {
     console.error('Error handling extension:', error);
-    socket.emit('error', { message: 'Failed to process extension request' });
+    
+    // On error, assume AI declines to be safe
+    socket.emit('extension-response', {
+      userDecision: decision,
+      aiDecision: 'decline',
+      success: false
+    });
   }
 };
 

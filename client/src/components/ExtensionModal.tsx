@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
+import { useAppContext } from '../context/AppContext';
 import { Modal, Button } from './shared';
 
 interface ExtensionModalProps {
@@ -18,20 +19,34 @@ const ExtensionModal: React.FC<ExtensionModalProps> = ({
   userDecision 
 }) => {
   const { settings } = useSettingsContext();
+  const { state } = useAppContext();
   const extensionDuration = settings.appSettings.extensionDuration;
+  const aiCharacterName = state.aiCharacter?.name || 'AI';
 
   const getStatusText = () => {
-    if (userDecision === 'extend' && aiWantsExtension) {
-      return `🎉 Both parties want to extend! Adding ${extensionDuration} minutes...`;
-    } else if (userDecision === 'extend' && !aiWantsExtension) {
-      return "😔 Sorry, the AI doesn't want to continue. Connecting to new AI...";
-    } else if (userDecision === 'decline') {
-      return "👋 Session ending. Connecting to new AI...";
+    // If user made decision but AI hasn't yet
+    if (userDecision && !state.extensionState.aiDecision) {
+      return userDecision === 'extend' 
+        ? `⏳ Waiting for ${aiCharacterName} to decide...`
+        : `👋 Session ending. Connecting to new AI...`;
     }
+
+    // If both decisions are made
+    if (userDecision && state.extensionState.aiDecision) {
+      if (userDecision === 'extend' && state.extensionState.aiDecision === 'extend') {
+        return `🎉 Both parties want to extend! Adding ${extensionDuration} minutes...`;
+      } else if (userDecision === 'extend' && state.extensionState.aiDecision === 'decline') {
+        return `😔 Sorry, ${aiCharacterName} doesn't want to continue. Connecting to new AI...`;
+      } else {
+        return "👋 Session ending. Connecting to new AI...";
+      }
+    }
+
     return null;
   };
 
   const statusText = getStatusText();
+  const showButtons = !userDecision; // Hide buttons once user has decided
 
   return (
     <Modal isVisible={isVisible} className="extension-modal">
@@ -51,20 +66,24 @@ const ExtensionModal: React.FC<ExtensionModalProps> = ({
             </div>
             
             <div className="extension-ai-status">
-              {aiWantsExtension 
-                ? "🌙 Luna wants to continue chatting!" 
-                : "🌙 Luna is deciding..."
+              {state.extensionState.aiDecision === 'extend'
+                ? `🌟 ${aiCharacterName} wants to continue chatting!`
+                : state.extensionState.aiDecision === 'decline'
+                ? `😔 ${aiCharacterName} doesn't want to continue.`
+                : `🤔 ${aiCharacterName} is deciding...`
               }
             </div>
             
-            <div className="extension-buttons">
-              <Button onClick={onDecline} variant="secondary">
-                No, thanks
-              </Button>
-              <Button onClick={onExtend} variant="primary">
-                Yes, extend!
-              </Button>
-            </div>
+            {showButtons && (
+              <div className="extension-buttons">
+                <Button onClick={onDecline} variant="secondary">
+                  No, thanks
+                </Button>
+                <Button onClick={onExtend} variant="primary">
+                  Yes, extend!
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

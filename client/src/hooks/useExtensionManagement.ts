@@ -19,41 +19,46 @@ export const useExtensionManagement = () => {
     sessionEndTriggeredRef.current = false;
   }, [state.sessionId]);
 
+  // Only proceed when BOTH user and AI decisions are available
   useEffect(() => {
-    if (state.extensionState.userDecision && state.extensionState.aiDecision) {
-      console.log('Extension decisions:', {
-        user: state.extensionState.userDecision,
-        ai: state.extensionState.aiDecision
-      });
-
-      setTimeout(() => {
-        if (state.extensionState.userDecision === 'extend' && state.extensionState.aiDecision === 'extend') {
-          // Both want to extend - reset timer with extension duration from settings (use ref)
-          console.log('Both parties want to extend, extending session');
-          dispatch({
-            type: 'SET_TIMER',
-            payload: { minutes: extensionDurationRef.current, seconds: 0, isActive: true }
-          });
-          dispatch({
-            type: 'SET_EXTENSION_STATE',
-            payload: {
-              isModalVisible: false,
-              userDecision: null,
-              aiDecision: null,
-              hasBeenOffered: false
-            }
-          });
-        } else {
-          // Either party declined - end session and trigger new AI connection
-          console.log('Extension declined, ending session and connecting to new AI');
-          
-          if (state.sessionId && !sessionEndTriggeredRef.current) {
-            sessionEndTriggeredRef.current = true;
-            socketService.endSession(state.sessionId);
-          }
-        }
-      }, 2000);
+    // Don't proceed unless we have both decisions
+    if (!state.extensionState.userDecision || !state.extensionState.aiDecision) {
+      return;
     }
+
+    console.log('Extension decisions:', {
+      user: state.extensionState.userDecision,
+      ai: state.extensionState.aiDecision
+    });
+
+    // Wait 2 seconds to show the result message, then act
+    setTimeout(() => {
+      if (state.extensionState.userDecision === 'extend' && state.extensionState.aiDecision === 'extend') {
+        // Both want to extend - reset timer with extension duration from settings
+        console.log('Both parties want to extend, extending session');
+        dispatch({
+          type: 'SET_TIMER',
+          payload: { minutes: extensionDurationRef.current, seconds: 0, isActive: true }
+        });
+        dispatch({
+          type: 'SET_EXTENSION_STATE',
+          payload: {
+            isModalVisible: false,
+            userDecision: null,
+            aiDecision: null,
+            hasBeenOffered: false
+          }
+        });
+      } else {
+        // Either party declined - end session and trigger new AI connection
+        console.log('Extension declined, ending session and connecting to new AI');
+        
+        if (state.sessionId && !sessionEndTriggeredRef.current) {
+          sessionEndTriggeredRef.current = true;
+          socketService.endSession(state.sessionId);
+        }
+      }
+    }, 2000);
   }, [
     state.extensionState.userDecision, 
     state.extensionState.aiDecision, 
