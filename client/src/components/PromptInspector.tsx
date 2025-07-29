@@ -121,14 +121,14 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
       // examples: '', // For future use
     };
     
-    console.log('Template data:', JSON.stringify(templateData, null, 2));
+    //console.log('Template data:', JSON.stringify(templateData, null, 2));
     
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
       delete templateData.description;
     }
     
-    console.log('Final template data:', JSON.stringify(templateData, null, 2));
+    //console.log('Final template data:', JSON.stringify(templateData, null, 2));
     
     const result = renderTemplate(template, templateData);
     console.log('Rendered template result:', result);

@@ -83,7 +83,7 @@ class AIService {
       // examples: character.examples || '', // For future use
     };
     
-    console.log('Template data:', JSON.stringify(templateData, null, 2));
+    //console.log('Template data:', JSON.stringify(templateData, null, 2));
     
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
