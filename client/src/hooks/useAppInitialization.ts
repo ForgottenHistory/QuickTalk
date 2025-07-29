@@ -70,11 +70,24 @@ export const useAppInitialization = () => {
       });
 
       socketService.onSessionEnded(() => {
+        console.log('Session ended event received in app initialization');
         // This will be handled by session management hook
       });
 
       socketService.onError((error) => {
         console.error('Socket error:', error);
+        
+        // If it's a "Session not found" error and we have a session ID,
+        // it means the session was ended on the backend but frontend doesn't know
+        if (error.message === 'Session not found' && state.sessionId) {
+          console.log('Session not found error - session may have ended, triggering reconnection');
+          // Force a reconnection by dispatching session end
+          dispatch({ type: 'SET_CONNECTING', payload: true });
+          // Reset session to trigger new connection
+          setTimeout(() => {
+            window.location.reload(); // Simple but effective solution
+          }, 1000);
+        }
       });
     };
 

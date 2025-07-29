@@ -27,18 +27,38 @@ const handleExtension = async (socket, sessionId, decision) => {
       success: decision === 'extend' && aiDecision === 'extend'
     });
     
-    // The actual session extension/ending will be handled by the frontend
-    // after showing the appropriate message to the user
+    // Handle session state based on decisions
+    if (decision === 'extend' && aiDecision === 'extend') {
+      console.log(`Both parties want to extend session ${sessionId}`);
+      // Session will be extended by frontend after showing message
+      setTimeout(() => {
+        sessionManager.extendSession(sessionId);
+        console.log(`Session ${sessionId} extended`);
+      }, 2500); // Give time for frontend message display
+    } else {
+      console.log(`Extension declined for session ${sessionId}, ending session`);
+      // End session and notify client after delay for message display
+      setTimeout(() => {
+        sessionManager.endSession(sessionId);
+        socket.emit('session-ended');
+        console.log(`Session ${sessionId} ended and session-ended event sent`);
+      }, 2500); // Give time for frontend message display
+    }
     
   } catch (error) {
     console.error('Error handling extension:', error);
     
-    // On error, assume AI declines to be safe
+    // On error, assume AI declines and end session
     socket.emit('extension-response', {
       userDecision: decision,
       aiDecision: 'decline',
       success: false
     });
+    
+    setTimeout(() => {
+      sessionManager.endSession(sessionId);
+      socket.emit('session-ended');
+    }, 2500);
   }
 };
 

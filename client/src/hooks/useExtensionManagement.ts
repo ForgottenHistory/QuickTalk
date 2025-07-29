@@ -1,23 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useSettingsContext } from '../context/SettingsContext';
-import { socketService } from '../services/socketService';
 
 export const useExtensionManagement = () => {
   const { state, dispatch } = useAppContext();
   const { settings } = useSettingsContext();
   const extensionDurationRef = useRef(settings.appSettings.extensionDuration);
-  const sessionEndTriggeredRef = useRef(false);
 
   // Update ref when settings change
   useEffect(() => {
     extensionDurationRef.current = settings.appSettings.extensionDuration;
   }, [settings.appSettings.extensionDuration]);
-
-  // Reset session end trigger when new session starts
-  useEffect(() => {
-    sessionEndTriggeredRef.current = false;
-  }, [state.sessionId]);
 
   // Only proceed when BOTH user and AI decisions are available
   useEffect(() => {
@@ -50,19 +43,24 @@ export const useExtensionManagement = () => {
           }
         });
       } else {
-        // Either party declined - end session and trigger new AI connection
-        console.log('Extension declined, ending session and connecting to new AI');
-        
-        if (state.sessionId && !sessionEndTriggeredRef.current) {
-          sessionEndTriggeredRef.current = true;
-          socketService.endSession(state.sessionId);
-        }
+        // Either party declined - hide modal and wait for backend to send session-ended
+        console.log('Extension declined, hiding modal and waiting for session-ended event');
+        dispatch({
+          type: 'SET_EXTENSION_STATE',
+          payload: {
+            isModalVisible: false,
+            userDecision: null,
+            aiDecision: null,
+            hasBeenOffered: false
+          }
+        });
+        // Don't call socketService.endSession here - let backend handle it
+        // The session-ended event will trigger the new AI connection
       }
     }, 2000);
   }, [
     state.extensionState.userDecision, 
     state.extensionState.aiDecision, 
-    state.sessionId, 
     dispatch
   ]);
 };
