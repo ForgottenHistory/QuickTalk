@@ -4,6 +4,7 @@ const aiService = require('../services/aiService');
 const handleExtension = async (socket, sessionId, decision) => {
   const session = sessionManager.getSession(sessionId);
   if (!session) {
+    console.error(`Extension requested for non-existent session: ${sessionId}`);
     socket.emit('error', { message: 'Session not found' });
     return;
   }
@@ -30,18 +31,25 @@ const handleExtension = async (socket, sessionId, decision) => {
     // Handle session state based on decisions
     if (decision === 'extend' && aiDecision === 'extend') {
       console.log(`Both parties want to extend session ${sessionId}`);
-      // Session will be extended by frontend after showing message
-      setTimeout(() => {
-        sessionManager.extendSession(sessionId);
-        console.log(`Session ${sessionId} extended`);
-      }, 2500); // Give time for frontend message display
+      
+      // Extend the session immediately instead of using setTimeout
+      sessionManager.extendSession(sessionId);
+      console.log(`Session ${sessionId} extended successfully`);
+      
+      // Mark that extension was successful - don't end the session
+      // The frontend will handle hiding the modal after showing the success message
+      
     } else {
-      console.log(`Extension declined for session ${sessionId}, ending session`);
-      // End session and notify client after delay for message display
+      console.log(`Extension declined for session ${sessionId}, will end session after delay`);
+      
+      // End session after delay for message display, but keep session alive for now
       setTimeout(() => {
-        sessionManager.endSession(sessionId);
-        socket.emit('session-ended');
-        console.log(`Session ${sessionId} ended and session-ended event sent`);
+        const currentSession = sessionManager.getSession(sessionId);
+        if (currentSession) {
+          sessionManager.endSession(sessionId);
+          socket.emit('session-ended');
+          console.log(`Session ${sessionId} ended and session-ended event sent`);
+        }
       }, 2500); // Give time for frontend message display
     }
     
@@ -56,8 +64,11 @@ const handleExtension = async (socket, sessionId, decision) => {
     });
     
     setTimeout(() => {
-      sessionManager.endSession(sessionId);
-      socket.emit('session-ended');
+      const currentSession = sessionManager.getSession(sessionId);
+      if (currentSession) {
+        sessionManager.endSession(sessionId);
+        socket.emit('session-ended');
+      }
     }, 2500);
   }
 };

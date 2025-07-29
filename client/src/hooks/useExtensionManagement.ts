@@ -24,40 +24,38 @@ export const useExtensionManagement = () => {
       ai: state.extensionState.aiDecision
     });
 
-    // Wait 2 seconds to show the result message, then act
+    // Check if both parties want to extend
+    const bothWantExtension = state.extensionState.userDecision === 'extend' && 
+                             state.extensionState.aiDecision === 'extend';
+
+    if (bothWantExtension) {
+      console.log('Both parties want to extend, extending session immediately');
+      
+      // Extend the timer immediately since backend already extended the session
+      dispatch({
+        type: 'SET_TIMER',
+        payload: { minutes: extensionDurationRef.current, seconds: 0, isActive: true }
+      });
+    }
+
+    // Wait 2 seconds to show the result message, then hide modal
     setTimeout(() => {
-      if (state.extensionState.userDecision === 'extend' && state.extensionState.aiDecision === 'extend') {
-        // Both want to extend - reset timer with extension duration from settings
-        console.log('Both parties want to extend, extending session');
-        dispatch({
-          type: 'SET_TIMER',
-          payload: { minutes: extensionDurationRef.current, seconds: 0, isActive: true }
-        });
-        dispatch({
-          type: 'SET_EXTENSION_STATE',
-          payload: {
-            isModalVisible: false,
-            userDecision: null,
-            aiDecision: null,
-            hasBeenOffered: false
-          }
-        });
-      } else {
-        // Either party declined - hide modal and wait for backend to send session-ended
-        console.log('Extension declined, hiding modal and waiting for session-ended event');
-        dispatch({
-          type: 'SET_EXTENSION_STATE',
-          payload: {
-            isModalVisible: false,
-            userDecision: null,
-            aiDecision: null,
-            hasBeenOffered: false
-          }
-        });
-        // Don't call socketService.endSession here - let backend handle it
-        // The session-ended event will trigger the new AI connection
-      }
+      console.log('Hiding extension modal after showing result');
+      dispatch({
+        type: 'SET_EXTENSION_STATE',
+        payload: {
+          isModalVisible: false,
+          userDecision: null,
+          aiDecision: null,
+          hasBeenOffered: false
+        }
+      });
+
+      // If extension was declined, the backend will send session-ended event
+      // The session handling hook will handle connecting to a new AI
+
     }, 2000);
+
   }, [
     state.extensionState.userDecision, 
     state.extensionState.aiDecision, 
