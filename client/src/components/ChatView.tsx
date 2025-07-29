@@ -11,6 +11,10 @@ import CharacterManagementPanel from './CharacterManagementPanel';
 
 interface ChatViewProps {
   onSendMessage: (text: string) => void;
+  onExit?: () => void;
+  onExtend?: () => void; 
+  onDecline?: () => void;
+  isDemoMode?: boolean;
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ onSendMessage }) => {
