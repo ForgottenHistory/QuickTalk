@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "**/*.js"
+  ],
+  "ignore": [
+    "node_modules/**/*",
+    "data/**/*",
+    "*.json"
+  ],
+  "delay": 1000,
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

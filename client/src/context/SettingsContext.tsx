@@ -111,7 +111,8 @@ const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): 
         ...state, 
         savedAppSettings: action.payload,
         appSettings: action.payload,
-        hasUnsavedChanges: JSON.stringify(action.payload) !== JSON.stringify(state.savedAppSettings) ||
+        // Recalculate unsaved changes after successful save
+        hasUnsavedChanges: JSON.stringify(action.payload) !== JSON.stringify(state.appSettings) ||
                           JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
       };
     case 'SET_SAVED_LLM_SETTINGS':
@@ -119,8 +120,9 @@ const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): 
         ...state, 
         savedLLMSettings: action.payload,
         llmSettings: action.payload,
+        // Recalculate unsaved changes after successful save
         hasUnsavedChanges: JSON.stringify(state.appSettings) !== JSON.stringify(state.savedAppSettings) ||
-                          JSON.stringify(action.payload) !== JSON.stringify(state.savedLLMSettings)
+                          JSON.stringify(action.payload) !== JSON.stringify(state.llmSettings)
       };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
@@ -199,6 +201,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: 'SET_SAVE_SUCCESS', payload: false });
       
       // Save both app and LLM settings
       const [updatedAppSettings, updatedLLMSettings] = await Promise.all([
@@ -206,8 +209,17 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         settingsService.updateLLMSettings(settings.llmSettings)
       ]);
       
+      // Update the saved states (this will trigger recalculation of hasUnsavedChanges)
       dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: updatedAppSettings });
       dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: updatedLLMSettings });
+      
+      // Force clear unsaved changes flag
+      setTimeout(() => {
+        dispatch({ 
+          type: 'UPDATE_APP_SETTINGS_LOCAL', 
+          payload: {} 
+        });
+      }, 100);
       
       // Show success message
       dispatch({ type: 'SET_SAVE_SUCCESS', payload: true });

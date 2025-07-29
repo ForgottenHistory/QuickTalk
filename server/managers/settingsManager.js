@@ -47,6 +47,7 @@ You are {{char}} engaging in a conversation with a human user.
 class SettingsManager {
   constructor() {
     this.settings = { ...defaultSettings };
+    this.saveInProgress = false;
     this.ensureDataDirectory();
     this.loadSettings();
   }
@@ -80,13 +81,30 @@ class SettingsManager {
   }
 
   async saveSettings() {
+    // Prevent concurrent saves and potential file conflicts
+    if (this.saveInProgress) {
+      console.log('Save already in progress, skipping...');
+      return;
+    }
+
+    this.saveInProgress = true;
+    
     try {
       await this.ensureDataDirectory();
-      await fs.writeFile(SETTINGS_FILE, JSON.stringify(this.settings, null, 2));
+      
+      // Use atomic write with temporary file to prevent partial writes
+      const tempFile = SETTINGS_FILE + '.tmp';
+      const settingsData = JSON.stringify(this.settings, null, 2);
+      
+      await fs.writeFile(tempFile, settingsData);
+      await fs.rename(tempFile, SETTINGS_FILE);
+      
       console.log('Settings saved to file');
     } catch (error) {
       console.error('Failed to save settings:', error);
       throw error;
+    } finally {
+      this.saveInProgress = false;
     }
   }
 
