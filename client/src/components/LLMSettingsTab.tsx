@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSettingsContext } from '../context/SettingsContext';
+import ModelSelector from './ModelSelector';
 import {
   SettingField,
   NumberInput,
@@ -39,14 +40,6 @@ const LLMSettingsTab: React.FC = () => {
     }
   };
 
-  const modelOptions = [
-    { value: 'moonshotai/Kimi-K2-Instruct', label: 'moonshotai/Kimi-K2-Instruct' },
-    { value: 'claude-3-sonnet', label: 'claude-3-sonnet' },
-    { value: 'gpt-4-turbo', label: 'gpt-4-turbo' },
-    { value: 'gpt-3.5-turbo', label: 'gpt-3.5-turbo' },
-    { value: 'llama-2-70b', label: 'llama-2-70b' }
-  ];
-
   const lengthOptions = [
     { value: 'short', label: 'Short (50-150 tokens)' },
     { value: 'medium', label: 'Medium (150-300 tokens)' },
@@ -57,15 +50,15 @@ const LLMSettingsTab: React.FC = () => {
     <div>
       <h3 className="section-title">Large Language Model Settings</h3>
 
-      {/* Basic LLM Settings */}
+      {/* AI Model Selector */}
       <SettingField
         label="🤖 AI Model"
-        description="Choose the AI model for generating responses"
+        description="Choose the AI model for generating responses from Featherless.ai"
       >
-        <SelectInput
-          value={settings.llmSettings.model}
-          onChange={(v) => updateString('model', v)}
-          options={modelOptions}
+        <ModelSelector
+          selectedModel={settings.llmSettings.model}
+          onModelSelect={(modelId) => updateString('model', modelId)}
+          disabled={settings.isLoading}
         />
       </SettingField>
 

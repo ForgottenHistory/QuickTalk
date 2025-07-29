@@ -14,6 +14,7 @@ import './styles/characters.css';
 import './styles/character-filters.css';
 import './styles/character-editor.css';
 import './styles/prompt-inspector.css';
+import './styles/model-selector.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

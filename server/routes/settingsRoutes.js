@@ -1,5 +1,6 @@
 const express = require('express');
 const settingsManager = require('../managers/settingsManager');
+const featherlessService = require('../services/featherlessService');
 
 const router = express.Router();
 
@@ -99,6 +100,29 @@ router.post('/settings/reset', async (req, res) => {
   } catch (error) {
     console.error('Error resetting all settings:', error);
     res.status(500).json({ error: 'Failed to reset all settings' });
+  }
+});
+
+// Get available LLM models
+router.get('/models', async (req, res) => {
+  try {
+    const models = await featherlessService.getModels();
+    res.json(models);
+  } catch (error) {
+    console.error('Error getting models:', error);
+    res.status(500).json({ error: 'Failed to get models' });
+  }
+});
+
+// Clear models cache (for admin/debug purposes)
+router.post('/models/refresh', async (req, res) => {
+  try {
+    featherlessService.clearCache();
+    const models = await featherlessService.getModels();
+    res.json({ message: 'Models cache refreshed', count: models.length });
+  } catch (error) {
+    console.error('Error refreshing models:', error);
+    res.status(500).json({ error: 'Failed to refresh models' });
   }
 });
 
