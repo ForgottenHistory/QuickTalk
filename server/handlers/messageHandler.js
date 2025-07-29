@@ -62,8 +62,9 @@ const handleMessage = async (io, socket, sessionId, message) => {
           sender: 'ai' 
         });
         
-        // Split response by newlines and send as separate messages
-        await sendMultipleMessages(io, sessionId, aiResponseText, session.aiCharacter.name);
+        // Clean and split response by newlines and send as separate messages
+        const cleanedResponse = cleanResponse(aiResponseText);
+        await sendMultipleMessages(io, sessionId, cleanedResponse, session.aiCharacter.name);
         
       } catch (error) {
         console.error('Error generating AI response:', error);
@@ -89,9 +90,35 @@ const handleMessage = async (io, socket, sessionId, message) => {
   }, thinkingDelay);
 };
 
+const cleanResponse = (responseText) => {
+  if (!responseText || typeof responseText !== 'string') {
+    return '';
+  }
+  
+  // First, trim the entire response
+  let cleaned = responseText.trim();
+  
+  // Replace multiple consecutive newlines with single newlines
+  // This handles cases like \n\n\n or \r\n\r\n
+  cleaned = cleaned.replace(/[\r\n]{3,}/g, '\n\n');
+  
+  // Replace double newlines with single newlines (converts paragraph breaks to message breaks)
+  cleaned = cleaned.replace(/\n\n+/g, '\n');
+  
+  // Remove any remaining carriage returns
+  cleaned = cleaned.replace(/\r/g, '');
+  
+  console.log(`Original response: "${responseText}"`);
+  console.log(`Cleaned response: "${cleaned}"`);
+  
+  return cleaned;
+};
+
 const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
-  // Split by newlines and filter out empty lines
-  const messageParts = responseText.split('\n').filter(part => part.trim() !== '');
+  // Split by newlines and filter out empty/whitespace-only lines
+  const messageParts = responseText.split('\n')
+    .map(part => part.trim())
+    .filter(part => part.length > 0);
   
   console.log(`Splitting AI response into ${messageParts.length} messages for session ${sessionId}`);
   
@@ -111,8 +138,7 @@ const sendMultipleMessages = async (io, sessionId, responseText, aiName) => {
   
   // Send multiple messages with delays between them
   for (let i = 0; i < messageParts.length; i++) {
-    const part = messageParts[i].trim();
-    if (!part) continue;
+    const part = messageParts[i];
     
     // Add delay between messages (except for the first one)
     if (i > 0) {
