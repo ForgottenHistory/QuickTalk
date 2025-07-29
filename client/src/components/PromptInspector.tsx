@@ -106,19 +106,6 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const getSystemPromptFromTemplate = (): string => {
     if (!state.aiCharacter) return '';
 
-    // Get system prompt (custom or default)
-    let systemPrompt;
-    if (settings.llmSettings.systemPromptCustomization && 
-        settings.llmSettings.customSystemPrompt && 
-        settings.llmSettings.customSystemPrompt.trim()) {
-      systemPrompt = settings.llmSettings.customSystemPrompt;
-    } else {
-      systemPrompt = getDefaultCharacterPrompt();
-    }
-    
-    // Get the context template
-    const template = settings.llmSettings.contextTemplate || '';
-    
     // Calculate time variables
     const totalSeconds = state.timer.minutes * 60 + state.timer.seconds;
     let timeMinutes = 0;
@@ -147,7 +134,6 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
     // Prepare template data with all available variables
     const templateData: Record<string, any> = {
       // Character variables
-      system: systemPrompt,
       char: state.aiCharacter.name,
       description: state.aiCharacter.description,
       personality: state.aiCharacter.personality,
@@ -167,8 +153,26 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
       responseLength: settings.llmSettings.responseLength,
       maxTokens: settings.llmSettings.maxTokens.toString(),
     };
+
+    // Get system prompt (custom or default) and apply template processing
+    let systemPrompt;
+    if (settings.llmSettings.systemPromptCustomization && 
+        settings.llmSettings.customSystemPrompt && 
+        settings.llmSettings.customSystemPrompt.trim()) {
+      // Apply template processing to custom system prompt
+      const customPromptTemplate = settings.llmSettings.customSystemPrompt;
+      systemPrompt = renderTemplate(customPromptTemplate, templateData);
+    } else {
+      systemPrompt = getDefaultCharacterPrompt();
+    }
     
-    console.log('Frontend template data:', JSON.stringify(templateData, null, 2));
+    // Add system prompt to template data for context template
+    templateData.system = systemPrompt;
+    
+    // Get the context template
+    const template = settings.llmSettings.contextTemplate || '';
+    
+    console.log('Frontend template data with processed system prompt:', JSON.stringify(templateData, null, 2));
     
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {

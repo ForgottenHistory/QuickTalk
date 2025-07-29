@@ -80,18 +80,7 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
   }
 
   buildContextFromTemplate(character, timeRemaining = null) {
-    // Get system prompt (custom or default)
-    let systemPrompt;
-    if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
-      systemPrompt = settingsManager.getCustomSystemPrompt();
-    } else {
-      systemPrompt = this.getDefaultSystemPrompt(character, timeRemaining);
-    }
-    
-    // Get the context template
-    const template = settingsManager.getContextTemplate();
-    
-    // Calculate time variables
+    // Calculate time variables first
     let timeMinutes = 0;
     let timeSeconds = 0;
     let timeFormatted = '';
@@ -118,7 +107,6 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
     // Prepare template data with all available variables
     const templateData = {
       // Character variables
-      system: systemPrompt,
       char: character.name,
       description: character.description,
       personality: character.personality,
@@ -137,11 +125,25 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
       // Response length
       responseLength: settingsManager.getResponseLength(),
       maxTokens: settingsManager.getMaxTokens().toString(),
-      
-      // examples: character.examples || '', // For future use
     };
     
-    console.log('Template data with time variables:', JSON.stringify(templateData, null, 2));
+    // Get system prompt (custom or default) and apply template processing
+    let systemPrompt;
+    if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
+      // Apply template processing to custom system prompt
+      const customPromptTemplate = settingsManager.getCustomSystemPrompt();
+      systemPrompt = this.renderTemplate(customPromptTemplate, templateData);
+    } else {
+      systemPrompt = this.getDefaultSystemPrompt(character, timeRemaining);
+    }
+    
+    // Add system prompt to template data for context template
+    templateData.system = systemPrompt;
+    
+    // Get the context template
+    const template = settingsManager.getContextTemplate();
+    
+    console.log('Template data with processed system prompt:', JSON.stringify(templateData, null, 2));
     
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
