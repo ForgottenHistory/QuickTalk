@@ -7,17 +7,29 @@ export const useExtensionManagement = () => {
   const { state, dispatch } = useAppContext();
   const { settings } = useSettingsContext();
   const extensionDurationRef = useRef(settings.appSettings.extensionDuration);
+  const sessionEndTriggeredRef = useRef(false);
 
   // Update ref when settings change
   useEffect(() => {
     extensionDurationRef.current = settings.appSettings.extensionDuration;
   }, [settings.appSettings.extensionDuration]);
 
+  // Reset session end trigger when new session starts
+  useEffect(() => {
+    sessionEndTriggeredRef.current = false;
+  }, [state.sessionId]);
+
   useEffect(() => {
     if (state.extensionState.userDecision && state.extensionState.aiDecision) {
+      console.log('Extension decisions:', {
+        user: state.extensionState.userDecision,
+        ai: state.extensionState.aiDecision
+      });
+
       setTimeout(() => {
         if (state.extensionState.userDecision === 'extend' && state.extensionState.aiDecision === 'extend') {
           // Both want to extend - reset timer with extension duration from settings (use ref)
+          console.log('Both parties want to extend, extending session');
           dispatch({
             type: 'SET_TIMER',
             payload: { minutes: extensionDurationRef.current, seconds: 0, isActive: true }
@@ -32,8 +44,11 @@ export const useExtensionManagement = () => {
             }
           });
         } else {
-          // Either declined - end session
-          if (state.sessionId) {
+          // Either party declined - end session and trigger new AI connection
+          console.log('Extension declined, ending session and connecting to new AI');
+          
+          if (state.sessionId && !sessionEndTriggeredRef.current) {
+            sessionEndTriggeredRef.current = true;
             socketService.endSession(state.sessionId);
           }
         }

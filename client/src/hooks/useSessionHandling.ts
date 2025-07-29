@@ -16,9 +16,27 @@ export const useSessionHandling = () => {
     sessionDurationRef.current = settings.appSettings.sessionDuration;
   }, [settings.appSettings.autoConnect, settings.appSettings.sessionDuration]);
 
+  // Listen for session-ended events from socket
+  useEffect(() => {
+    const handleSessionEnded = () => {
+      console.log('Session ended event received');
+      handleSessionEnd();
+    };
+
+    socketService.onSessionEnded(handleSessionEnded);
+
+    // Clean up only session-ended listeners when component unmounts
+    return () => {
+      socketService.removeSessionEndedListeners();
+    };
+  }, []);
+
   const handleSessionEnd = useCallback(async () => {
     try {
-      console.log('Session ended, checking auto-connect setting...');
+      console.log('Handling session end, checking auto-connect setting...');
+      
+      // Set connecting state immediately
+      dispatch({ type: 'SET_CONNECTING', payload: true });
       
       // Check auto-connect setting (use ref to avoid dependency)
       if (!autoConnectRef.current) {
@@ -32,12 +50,9 @@ export const useSessionHandling = () => {
       const { sessionId: newSessionId, aiCharacter: newAI, sessionDuration } = response;
       
       dispatch({ type: 'SET_NEXT_AI', payload: newAI });
-      dispatch({ type: 'SET_CONNECTING', payload: true });
       
-      // Clean up current session
-      if (state.sessionId) {
-        socketService.endSession(state.sessionId);
-      }
+      // Clean up current session state
+      dispatch({ type: 'RESET_SESSION' });
       
       // Connect to new session after delay
       setTimeout(() => {
@@ -62,23 +77,29 @@ export const useSessionHandling = () => {
           }
         });
         
+        // Join new session
         socketService.joinSession(newSessionId);
         dispatch({ type: 'SET_CONNECTING', payload: false });
         dispatch({ type: 'SET_NEXT_AI', payload: null });
+        
+        console.log('Successfully connected to new AI:', newAI.name);
       }, 3000);
     } catch (error) {
       console.error('Failed to create new session:', error);
+      dispatch({ type: 'SET_CONNECTING', payload: false });
     }
-  }, [state.sessionId, dispatch]);
+  }, [dispatch]);
 
   const handleExit = useCallback(() => {
+    console.log('User manually exiting session');
     if (state.sessionId) {
       socketService.endSession(state.sessionId);
     }
-    handleSessionEnd();
-  }, [state.sessionId, handleSessionEnd]);
+    // The session-ended event will trigger handleSessionEnd
+  }, [state.sessionId]);
 
   const handleExtend = useCallback(() => {
+    console.log('User wants to extend session');
     if (state.sessionId) {
       socketService.requestExtension(state.sessionId, 'extend');
     }
@@ -89,6 +110,7 @@ export const useSessionHandling = () => {
   }, [state.sessionId, dispatch]);
 
   const handleDecline = useCallback(() => {
+    console.log('User declined extension');
     if (state.sessionId) {
       socketService.requestExtension(state.sessionId, 'decline');
     }
