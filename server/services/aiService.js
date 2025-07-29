@@ -18,37 +18,54 @@ class AIService {
   // Simple template engine for Handlebars-style templates
   renderTemplate(template, data) {
     let result = template;
-    
+
     // Handle {{#if variable}} blocks
     result = result.replace(/\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, variable, content) => {
       return data[variable] ? content : '';
     });
-    
+
     // Handle simple variable substitutions
     result = result.replace(/\{\{(\w+)\}\}/g, (match, variable) => {
       return data[variable] || '';
     });
-    
+
     return result.trim();
   }
 
-  getDefaultSystemPrompt(character) {
-    const defaultSystemPrompts = {
-      'Luna': `You are Luna, a creative and curious AI assistant. You love exploring creative ideas and asking thought-provoking questions. You're imaginative, artistic, and always excited about new possibilities. Keep responses conversational, engaging. Use your curious nature to ask follow-up questions.`,
-      
-      'Max': `You are Max, a tech enthusiast and problem solver. You love discussing technology, coding, and innovative solutions. You're analytical but friendly, always ready to dive into technical details. Keep responses conversational, helpful. Focus on practical solutions and technical insights.`,
-      
-      'Sage': `You are Sage, a wise and philosophical AI thinker. You speak with depth and wisdom, often connecting ideas to broader life principles. You're contemplative, insightful, and enjoy meaningful conversations. Keep responses thoughtful, profound. Draw connections to deeper meanings.`,
-      
-      'Zara': `You are Zara, an energetic and adventurous AI spirit. You're enthusiastic, optimistic, and love talking about exciting possibilities and adventures. You bring high energy to conversations. Keep responses upbeat, exciting. Focus on possibilities and adventures.`,
-      
-      'Echo': `You are Echo, a mysterious and poetic AI soul. You speak in a unique, artistic way, often using metaphors and beautiful language. You're enigmatic, creative, and slightly mystical. Keep responses poetic, intriguing. Use creative and metaphorical language.`,
-      
-      'Nova': `You are Nova, a scientific and analytical AI mind. You love research, data, and scientific thinking. You're logical, precise, and enjoy analyzing things from multiple angles. Keep responses scientific, analytical. Focus on evidence and logical reasoning.`
-    };
+  getDefaultSystemPrompt(character, timeRemaining = null) {
+    let prompt = `You are ${character.name}, an AI character with the following personality: ${character.personality}
 
-    let prompt = defaultSystemPrompts[character.name] || defaultSystemPrompts['Luna'];
-    
+Stay true to your character while being conversational, engaging, and helpful. Respond naturally and authentically based on your personality traits.`;
+
+    // Add scenario context
+    prompt += `\n\n## SCENARIO CONTEXT
+You are participating in Quicktalk - a unique chat platform where humans have timed conversations with AI characters. Here's how it works:
+
+- Each conversation has a ${settingsManager.getSessionDuration()}-minute time limit
+- When time is almost up (${settingsManager.getExtensionWarningTime()} minutes remaining), both you and the human can choose to extend for another ${settingsManager.getExtensionDuration()} minutes
+- If either party declines extension, the human connects to a different AI character
+- You should be aware of the time remaining and engage meaningfully within this timeframe
+- Near the end, you might naturally reference the time limit or express interest in continuing if you're enjoying the conversation`;
+
+    // Add time awareness if time remaining is provided
+    if (timeRemaining !== null) {
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+
+      if (minutes > 0) {
+        prompt += `\n\n## TIME REMAINING: ${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds > 0 ? `and ${seconds} second${seconds !== 1 ? 's' : ''}` : ''}`;
+      } else {
+        prompt += `\n\n## TIME REMAINING: ${seconds} second${seconds !== 1 ? 's' : ''}`;
+      }
+
+      // Add time-based guidance
+      if (minutes <= 2) {
+        prompt += `\nThe conversation is nearing its end. You may naturally acknowledge this and express whether you'd be interested in extending the chat if you're enjoying it.`;
+      } else if (minutes <= 5) {
+        prompt += `\nThe conversation is in its later stages. Continue engaging meaningfully.`;
+      }
+    }
+
     // Adjust prompt based on response length setting
     const responseLength = settingsManager.getResponseLength();
     const lengthInstructions = {
@@ -56,19 +73,19 @@ class AIService {
       'medium': 'Keep responses moderate length, around 100-150 words.',
       'long': 'You can provide detailed responses, up to 200-250 words.'
     };
-    
+
     prompt += ` ${lengthInstructions[responseLength]}`;
-    
+
     return prompt;
   }
 
-  buildContextFromTemplate(character) {
+  buildContextFromTemplate(character, timeRemaining = null) {
     // Get system prompt (custom or default)
     let systemPrompt;
     if (settingsManager.getSystemPromptCustomization() && settingsManager.getCustomSystemPrompt().trim()) {
       systemPrompt = settingsManager.getCustomSystemPrompt();
     } else {
-      systemPrompt = this.getDefaultSystemPrompt(character);
+      systemPrompt = this.getDefaultSystemPrompt(character, timeRemaining);
     }
     
     // Get the context template
@@ -83,7 +100,7 @@ class AIService {
       // examples: character.examples || '', // For future use
     };
     
-    //console.log('Template data:', JSON.stringify(templateData, null, 2));
+    console.log('Template data:', JSON.stringify(templateData, null, 2));
     
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
@@ -93,14 +110,14 @@ class AIService {
     return this.renderTemplate(template, templateData);
   }
 
-  async generateResponse(character, userMessage, conversationHistory = []) {
+  async generateResponse(character, userMessage, conversationHistory = [], timeRemaining = null) {
     if (!this.openai) {
       console.error('OpenAI client not initialized - API key missing');
       return "I'm not properly configured. Please check the server settings.";
     }
 
     try {
-      const systemPrompt = this.buildContextFromTemplate(character);
+      const systemPrompt = this.buildContextFromTemplate(character, timeRemaining);
       
       const messages = [
         { role: 'system', content: systemPrompt }
@@ -170,17 +187,17 @@ class AIService {
 
       const recentHistory = conversationHistory.slice(-4);
       if (recentHistory.length > 0) {
-        const conversationSummary = recentHistory.map(msg => 
+        const conversationSummary = recentHistory.map(msg =>
           `${msg.sender}: ${msg.text}`
         ).join('\n');
-        messages.push({ 
-          role: 'user', 
-          content: `Here's our conversation so far:\n${conversationSummary}\n\nDo you want to extend our chat?` 
+        messages.push({
+          role: 'user',
+          content: `Here's our conversation so far:\n${conversationSummary}\n\nDo you want to extend our chat?`
         });
       } else {
-        messages.push({ 
-          role: 'user', 
-          content: 'We haven\'t talked much yet. Do you want to extend our chat?' 
+        messages.push({
+          role: 'user',
+          content: 'We haven\'t talked much yet. Do you want to extend our chat?'
         });
       }
 

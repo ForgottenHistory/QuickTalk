@@ -17,10 +17,10 @@ interface PromptInspectorProps {
   currentUserMessage: string;
 }
 
-const PromptInspector: React.FC<PromptInspectorProps> = ({ 
-  isVisible, 
-  onClose, 
-  currentUserMessage 
+const PromptInspector: React.FC<PromptInspectorProps> = ({
+  isVisible,
+  onClose,
+  currentUserMessage
 }) => {
   const { state } = useAppContext();
   const { settings } = useSettingsContext();
@@ -75,22 +75,31 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
 
     setPromptBlocks(blocks);
     setTotalTokens(blocks.reduce((sum, block) => sum + (block.tokens || 0), 0));
-  }, [isVisible, state.aiCharacter, state.messages, currentUserMessage, settings.llmSettings]);
+  }, [
+    isVisible, 
+    state.aiCharacter, 
+    state.messages, 
+    state.timer.minutes, // Add timer dependency
+    state.timer.seconds, // Add timer dependency  
+    state.timer.isActive, // Add timer dependency
+    currentUserMessage, 
+    settings.llmSettings
+  ]);
 
   // Simple template engine matching backend
   const renderTemplate = (template: string, data: Record<string, any>): string => {
     let result = template;
-    
+
     // Handle {{#if variable}} blocks
     result = result.replace(/\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, variable, content) => {
       return data[variable] ? content : '';
     });
-    
+
     // Handle simple variable substitutions
     result = result.replace(/\{\{(\w+)\}\}/g, (match, variable) => {
       return data[variable] || '';
     });
-    
+
     return result.trim();
   };
 
@@ -101,17 +110,17 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
 
     // Get system prompt (custom or default)
     let systemPrompt;
-    if (settings.llmSettings.systemPromptCustomization && 
-        settings.llmSettings.customSystemPrompt && 
-        settings.llmSettings.customSystemPrompt.trim()) {
+    if (settings.llmSettings.systemPromptCustomization &&
+      settings.llmSettings.customSystemPrompt &&
+      settings.llmSettings.customSystemPrompt.trim()) {
       systemPrompt = settings.llmSettings.customSystemPrompt;
     } else {
       systemPrompt = getDefaultCharacterPrompt();
     }
-    
+
     // Get the context template
     const template = settings.llmSettings.contextTemplate || '';
-    
+
     // Prepare template data
     const templateData: Record<string, any> = {
       system: systemPrompt,
@@ -120,34 +129,61 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
       personality: state.aiCharacter.personality, // Short personality summary
       // examples: '', // For future use
     };
-    
+
     //console.log('Template data:', JSON.stringify(templateData, null, 2));
-    
+
     // Only include description if it exists and is different from personality
     if (!templateData.description || templateData.description === templateData.personality) {
       delete templateData.description;
     }
-    
+
     //console.log('Final template data:', JSON.stringify(templateData, null, 2));
-    
+
     const result = renderTemplate(template, templateData);
     console.log('Rendered template result:', result);
-    
+
     return result;
   };
 
   const getDefaultCharacterPrompt = (): string => {
-    const defaultSystemPrompts: Record<string, string> = {
-      'Luna': 'You are Luna, a creative and curious AI assistant. You love exploring creative ideas and asking thought-provoking questions. You\'re imaginative, artistic, and always excited about new possibilities. Keep responses conversational, engaging. Use your curious nature to ask follow-up questions.',
-      'Max': 'You are Max, a tech enthusiast and problem solver. You love discussing technology, coding, and innovative solutions. You\'re analytical but friendly, always ready to dive into technical details. Keep responses conversational, helpful. Focus on practical solutions and technical insights.',
-      'Sage': 'You are Sage, a wise and philosophical AI thinker. You speak with depth and wisdom, often connecting ideas to broader life principles. You\'re contemplative, insightful, and enjoy meaningful conversations. Keep responses thoughtful, profound. Draw connections to deeper meanings.',
-      'Zara': 'You are Zara, an energetic and adventurous AI spirit. You\'re enthusiastic, optimistic, and love talking about exciting possibilities and adventures. You bring high energy to conversations. Keep responses upbeat, exciting. Focus on possibilities and adventures.',
-      'Echo': 'You are Echo, a mysterious and poetic AI soul. You speak in a unique, artistic way, often using metaphors and beautiful language. You\'re enigmatic, creative, and slightly mystical. Keep responses poetic, intriguing. Use creative and metaphorical language.',
-      'Nova': 'You are Nova, a scientific and analytical AI mind. You love research, data, and scientific thinking. You\'re logical, precise, and enjoy analyzing things from multiple angles. Keep responses scientific, analytical. Focus on evidence and logical reasoning.'
-    };
+    if (!state.aiCharacter) return '';
 
-    let prompt = defaultSystemPrompts[state.aiCharacter?.name || 'Luna'] || defaultSystemPrompts['Luna'];
-    
+    // Calculate time remaining for display
+    const totalSeconds = state.timer.minutes * 60 + state.timer.seconds;
+
+    let prompt = `You are ${state.aiCharacter.name}, an AI character with the following personality: ${state.aiCharacter.personality}
+
+Stay true to your character while being conversational, engaging, and helpful. Respond naturally and authentically based on your personality traits.`;
+
+    // Add scenario context (matching backend)
+    prompt += `\n\n## SCENARIO CONTEXT
+You are participating in Quicktalk - a unique chat platform where humans have timed conversations with AI characters. Here's how it works:
+
+- Each conversation has a ${settings.appSettings.sessionDuration}-minute time limit
+- When time is almost up (${settings.appSettings.extensionWarningTime} minutes remaining), both you and the human can choose to extend for another ${settings.appSettings.extensionDuration} minutes
+- If either party declines extension, the human connects to a different AI character
+- You should be aware of the time remaining and engage meaningfully within this timeframe
+- Near the end, you might naturally reference the time limit or express interest in continuing if you're enjoying the conversation`;
+
+    // Add time awareness if timer is active
+    if (state.timer.isActive && totalSeconds > 0) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+
+      if (minutes > 0) {
+        prompt += `\n\n## TIME REMAINING: ${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds > 0 ? `and ${seconds} second${seconds !== 1 ? 's' : ''}` : ''}`;
+      } else {
+        prompt += `\n\n## TIME REMAINING: ${seconds} second${seconds !== 1 ? 's' : ''}`;
+      }
+
+      // Add time-based guidance
+      if (minutes <= 2) {
+        prompt += `\nThe conversation is nearing its end. You may naturally acknowledge this and express whether you'd be interested in extending the chat if you're enjoying it.`;
+      } else if (minutes <= 5) {
+        prompt += `\nThe conversation is in its later stages. Continue engaging meaningfully.`;
+      }
+    }
+
     // Adjust prompt based on response length setting
     const responseLength = settings.llmSettings.responseLength;
     const lengthInstructions = {
@@ -155,52 +191,52 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
       'medium': 'Keep responses moderate length, around 100-150 words.',
       'long': 'You can provide detailed responses, up to 200-250 words.'
     };
-    
+
     prompt += ` ${lengthInstructions[responseLength]}`;
-    
+
     return prompt;
   };
 
   const getRoleplayContext = (): string => {
     if (!state.aiCharacter) return '';
-    
+
     // Only show roleplay context if NOT using custom system prompt
-    if (settings.llmSettings.systemPromptCustomization && 
-        settings.llmSettings.customSystemPrompt && 
-        settings.llmSettings.customSystemPrompt.trim()) {
+    if (settings.llmSettings.systemPromptCustomization &&
+      settings.llmSettings.customSystemPrompt &&
+      settings.llmSettings.customSystemPrompt.trim()) {
       return '';
     }
 
     const parts = [];
     parts.push('# **Roleplay Context**');
-    
+
     // Character Description (use description if available, otherwise personality)
     const description = state.aiCharacter.personality; // For now, this is our description
     if (description) {
       parts.push(`## ${state.aiCharacter.name}'s Description:`);
       parts.push(description);
     }
-    
+
     // Character Personality (same as description for our current setup)
     parts.push(`## ${state.aiCharacter.name}'s Personality:`);
     parts.push(state.aiCharacter.personality);
-    
+
     // User Persona
     parts.push(`## User's Persona:`);
     parts.push('A human conversing with AI characters.');
-    
+
     // Scenario
     parts.push(`## Scenario:`);
     parts.push(`You are ${state.aiCharacter.name} engaging in a conversation with a human user.`);
-    
+
     // Example responses would go here if we had them
     // if (state.aiCharacter.exampleMessages) {
     //   parts.push(`## ${state.aiCharacter.name}'s Example Response:`);
     //   parts.push(state.aiCharacter.exampleMessages);
     // }
-    
+
     parts.push('### **End of Roleplay Context**');
-    
+
     return parts.join('\n\n');
   };
 
@@ -260,11 +296,11 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const exportCleanFormat = () => {
     // Export without any role prefixes - just the raw content
     const parts: string[] = [];
-    
+
     promptBlocks.forEach(block => {
       parts.push(block.content);
     });
-    
+
     const cleanPrompt = parts.join('\n\n');
     copyToClipboard(cleanPrompt);
   };
@@ -272,37 +308,37 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
   const exportApiMessages = () => {
     // Export showing how it's structured as API messages
     const messages: string[] = [];
-    
+
     // System message (combines system prompt + roleplay context)
     const systemParts: string[] = [];
     const systemBlock = promptBlocks.find(b => b.type === 'system');
     const contextBlock = promptBlocks.find(b => b.type === 'roleplay_context');
-    
+
     if (systemBlock) systemParts.push(systemBlock.content);
     if (contextBlock) systemParts.push(contextBlock.content);
-    
+
     if (systemParts.length > 0) {
       messages.push(`{"role": "system", "content": "${systemParts.join('\\n\\n').replace(/"/g, '\\"')}"}`);
     }
-    
+
     // Add conversation history as separate messages
     const recentHistory = state.messages.slice(-6);
     recentHistory.forEach(msg => {
       const role = msg.sender === 'user' ? 'user' : 'assistant';
       messages.push(`{"role": "${role}", "content": "${msg.text.replace(/"/g, '\\"')}"}`);
     });
-    
+
     // Current user message
     if (currentUserMessage.trim()) {
       messages.push(`{"role": "user", "content": "${currentUserMessage.replace(/"/g, '\\"')}"}`);
     }
-    
+
     // Author's note as system message
     const authorsBlock = promptBlocks.find(b => b.type === 'authors_note');
     if (authorsBlock) {
       messages.push(`{"role": "system", "content": "${authorsBlock.content.replace(/"/g, '\\"')}"}`);
     }
-    
+
     const apiFormat = `[\n  ${messages.join(',\n  ')}\n]`;
     copyToClipboard(apiFormat);
   };
@@ -349,7 +385,7 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
         <div className="prompt-blocks">
           {promptBlocks.map((block, index) => (
             <div key={index} className="prompt-block">
-              <div 
+              <div
                 className="prompt-block-header"
                 style={{ borderLeftColor: getCategoryColor(block.type) }}
               >
@@ -368,7 +404,7 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
                     )}
                   </div>
                 </div>
-                <Button 
+                <Button
                   onClick={() => copyToClipboard(block.content)}
                   variant="secondary"
                   className="prompt-block-copy"
@@ -376,7 +412,7 @@ const PromptInspector: React.FC<PromptInspectorProps> = ({
                   📋
                 </Button>
               </div>
-              
+
               <div className="prompt-block-content">
                 <pre className="prompt-block-text">
                   {block.content}

@@ -42,10 +42,16 @@ const handleMessage = async (io, socket, sessionId, message) => {
     setTimeout(async () => {
       try {
         console.log(`Generating AI response for session ${sessionId}`);
+        
+        // Get current session time remaining for AI awareness
+        const timeRemaining = session.timeRemaining || 0;
+        console.log(`Session ${sessionId} has ${timeRemaining} seconds remaining`);
+        
         const aiResponseText = await aiService.generateResponse(
           session.aiCharacter, 
           message, 
-          session.messages
+          session.messages,
+          timeRemaining
         );
         
         console.log(`AI response generated for session ${sessionId}: "${aiResponseText}"`);
