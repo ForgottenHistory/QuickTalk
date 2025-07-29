@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, ReactNode, useEffect } fr
 import { SettingsState, AppSettings, LLMSettings } from '../types';
 import { settingsService } from '../services/settingsService';
 
-type SettingsAction = 
+type SettingsAction =
   | { type: 'TOGGLE_SETTINGS' }
   | { type: 'SET_SETTINGS_OPEN'; payload: boolean }
   | { type: 'SET_ACTIVE_TAB'; payload: 'app' | 'llm' }
@@ -29,6 +29,8 @@ const defaultLLMSettings: LLMSettings = {
   model: 'moonshotai/Kimi-K2-Instruct',
   temperature: 0.8,
   maxTokens: 300,
+  contextLength: 16384,
+  memoryTokens: 12000,
   systemPromptCustomization: false,
   responseLength: 'medium',
   customSystemPrompt: '',
@@ -88,41 +90,41 @@ const settingsReducer = (state: ExtendedSettingsState, action: SettingsAction): 
       return { ...state, activeTab: action.payload };
     case 'UPDATE_APP_SETTINGS_LOCAL':
       const newAppSettings = { ...state.appSettings, ...action.payload };
-      return { 
-        ...state, 
+      return {
+        ...state,
         appSettings: newAppSettings,
         hasUnsavedChanges: JSON.stringify(newAppSettings) !== JSON.stringify(state.savedAppSettings) ||
-                          JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
+          JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
       };
     case 'UPDATE_LLM_SETTINGS_LOCAL':
       const newLLMSettings = { ...state.llmSettings, ...action.payload };
-      return { 
-        ...state, 
+      return {
+        ...state,
         llmSettings: newLLMSettings,
         hasUnsavedChanges: JSON.stringify(state.appSettings) !== JSON.stringify(state.savedAppSettings) ||
-                          JSON.stringify(newLLMSettings) !== JSON.stringify(state.savedLLMSettings)
+          JSON.stringify(newLLMSettings) !== JSON.stringify(state.savedLLMSettings)
       };
     case 'SET_APP_SETTINGS':
       return { ...state, appSettings: action.payload };
     case 'SET_LLM_SETTINGS':
       return { ...state, llmSettings: action.payload };
     case 'SET_SAVED_APP_SETTINGS':
-      return { 
-        ...state, 
+      return {
+        ...state,
         savedAppSettings: action.payload,
         appSettings: action.payload,
         // Recalculate unsaved changes after successful save
         hasUnsavedChanges: JSON.stringify(action.payload) !== JSON.stringify(state.appSettings) ||
-                          JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
+          JSON.stringify(state.llmSettings) !== JSON.stringify(state.savedLLMSettings)
       };
     case 'SET_SAVED_LLM_SETTINGS':
-      return { 
-        ...state, 
+      return {
+        ...state,
         savedLLMSettings: action.payload,
         llmSettings: action.payload,
         // Recalculate unsaved changes after successful save
         hasUnsavedChanges: JSON.stringify(state.appSettings) !== JSON.stringify(state.savedAppSettings) ||
-                          JSON.stringify(action.payload) !== JSON.stringify(state.llmSettings)
+          JSON.stringify(action.payload) !== JSON.stringify(state.llmSettings)
       };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
@@ -155,7 +157,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const handleError = (error: any) => {
     console.error('Settings error:', error);
     const errorMessage = error.message || 'An error occurred';
-    
+
     // More user-friendly error messages
     let displayMessage = errorMessage;
     if (errorMessage.includes('404')) {
@@ -163,7 +165,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else if (errorMessage.includes('Failed to fetch')) {
       displayMessage = 'Cannot connect to server - using defaults';
     }
-    
+
     dispatch({ type: 'SET_ERROR', payload: displayMessage });
     setTimeout(() => {
       dispatch({ type: 'SET_ERROR', payload: null });
@@ -174,15 +176,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
-      
+
       const data = await settingsService.getSettings();
-      
+
       // Ensure new fields have defaults
       const llmSettingsWithDefaults = {
         ...defaultLLMSettings,
         ...data.llmSettings
       };
-      
+
       dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: data.appSettings });
       dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: llmSettingsWithDefaults });
       dispatch({ type: 'SET_INITIAL_LOAD_COMPLETE', payload: true });
@@ -202,31 +204,31 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       dispatch({ type: 'SET_SAVE_SUCCESS', payload: false });
-      
+
       // Save both app and LLM settings
       const [updatedAppSettings, updatedLLMSettings] = await Promise.all([
         settingsService.updateAppSettings(settings.appSettings),
         settingsService.updateLLMSettings(settings.llmSettings)
       ]);
-      
+
       // Update the saved states (this will trigger recalculation of hasUnsavedChanges)
       dispatch({ type: 'SET_SAVED_APP_SETTINGS', payload: updatedAppSettings });
       dispatch({ type: 'SET_SAVED_LLM_SETTINGS', payload: updatedLLMSettings });
-      
+
       // Force clear unsaved changes flag
       setTimeout(() => {
-        dispatch({ 
-          type: 'UPDATE_APP_SETTINGS_LOCAL', 
-          payload: {} 
+        dispatch({
+          type: 'UPDATE_APP_SETTINGS_LOCAL',
+          payload: {}
         });
       }, 100);
-      
+
       // Show success message
       dispatch({ type: 'SET_SAVE_SUCCESS', payload: true });
       setTimeout(() => {
         dispatch({ type: 'SET_SAVE_SUCCESS', payload: false });
       }, 3000);
-      
+
     } catch (error) {
       handleError(error);
     } finally {
@@ -267,7 +269,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 3;
-    
+
     const loadWithRetry = async () => {
       try {
         await loadSettings();
@@ -288,9 +290,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ 
-      settings, 
-      dispatch, 
+    <SettingsContext.Provider value={{
+      settings,
+      dispatch,
       saveAllSettings,
       resetAppSettings,
       resetLLMSettings,

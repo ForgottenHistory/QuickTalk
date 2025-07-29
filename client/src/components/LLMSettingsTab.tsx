@@ -108,6 +108,32 @@ const LLMSettingsTab: React.FC = () => {
         />
       </SettingField>
 
+      <SettingField
+        label={`🧠 Context Window: ${settings.llmSettings.contextLength} tokens`}
+        description="Total context length supported by your model"
+      >
+        <NumberInput
+          value={settings.llmSettings.contextLength}
+          onChange={(v) => updateNumber('contextLength', v)}
+          min={1024}
+          max={32768}
+          step={1024}
+        />
+      </SettingField>
+
+      <SettingField
+        label={`💭 Memory Size: ${settings.llmSettings.memoryTokens} tokens`}
+        description="How many tokens to reserve for conversation history. Older messages beyond this limit won't be included."
+      >
+        <NumberInput
+          value={settings.llmSettings.memoryTokens}
+          onChange={(v) => updateNumber('memoryTokens', v)}
+          min={500}
+          max={settings.llmSettings.contextLength - 1000}
+          step={500}
+        />
+      </SettingField>
+
       {/* Custom Prompt Settings */}
       <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--color-yellow)' }}>
         <h4 className="section-title">Custom Prompt Settings</h4>

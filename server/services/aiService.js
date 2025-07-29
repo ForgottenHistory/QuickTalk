@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const settingsManager = require('../managers/settingsManager');
+const tokenCounter = require('./tokenCounter'); // ADD THIS LINE
 
 class AIService {
   constructor() {
@@ -166,13 +167,22 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
 
     try {
       const systemPrompt = this.buildContextFromTemplate(character, timeRemaining);
+      const authorsNote = settingsManager.getAuthorsNote();
+      
+      // Calculate available tokens for conversation history
+      const memoryTokenLimit = settingsManager.getMemoryTokens();
+      
+      // Get messages that fit within token limit
+      const recentHistory = tokenCounter.getMessagesWithinTokenLimit(
+        conversationHistory, 
+        memoryTokenLimit
+      );
 
       const messages = [
         { role: 'system', content: systemPrompt }
       ];
 
-      // Add conversation history
-      const recentHistory = conversationHistory.slice(-6);
+      // Add conversation history within token limit
       recentHistory.forEach(msg => {
         messages.push({
           role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -184,7 +194,6 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
       messages.push({ role: 'user', content: userMessage });
 
       // Add author's note as system message if provided
-      const authorsNote = settingsManager.getAuthorsNote();
       if (authorsNote.trim()) {
         messages.push({
           role: 'system',
@@ -192,7 +201,15 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
         });
       }
 
-      console.log('Sending request to AI with messages:', messages.length);
+      // Debug token usage
+      const debugInfo = tokenCounter.debugTokenUsage(
+        [...recentHistory, { text: userMessage, sender: 'user' }],
+        systemPrompt,
+        authorsNote
+      );
+
+      console.log(`Using ${recentHistory.length}/${conversationHistory.length} messages within ${memoryTokenLimit} token limit`);
+      console.log(`Total estimated tokens: ${debugInfo.total}/${settingsManager.getContextLength()}`);
 
       // Get current settings
       const model = settingsManager.getLLMModel();
@@ -233,7 +250,13 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
         { role: 'system', content: systemPrompt }
       ];
 
-      const recentHistory = conversationHistory.slice(-4);
+      // Use token-based memory for extension decision too
+      const memoryTokenLimit = Math.floor(settingsManager.getMemoryTokens() / 2); // Use less for decision
+      const recentHistory = tokenCounter.getMessagesWithinTokenLimit(
+        conversationHistory, 
+        memoryTokenLimit
+      );
+
       if (recentHistory.length > 0) {
         const conversationSummary = recentHistory.map(msg =>
           `${msg.sender}: ${msg.text}`

@@ -63,6 +63,8 @@ export interface LLMSettings {
   customSystemPrompt: string;
   authorsNote: string;
   contextTemplate: string;
+  contextLength: number;
+  memoryTokens: number;
 }
 
 export interface SettingsState {

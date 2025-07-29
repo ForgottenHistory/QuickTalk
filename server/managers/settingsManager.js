@@ -40,7 +40,9 @@ You are {{char}} engaging in a conversation with a human user.
 ## {{char}}'s Example Response:
 {{examples}}
 {{/if}}
-### **End of Roleplay Context**`
+### **End of Roleplay Context**`,
+    contextLength: 16384,
+    memoryTokens: 12000
   }
 };
 
@@ -110,6 +112,14 @@ class SettingsManager {
 
   getSettings() {
     return { ...this.settings };
+  }
+
+  getContextLength() {
+    return this.settings.llmSettings.contextLength;
+  }
+
+  getMemoryTokens() {
+    return this.settings.llmSettings.memoryTokens;
   }
 
   async updateAppSettings(updates) {
