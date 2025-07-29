@@ -168,13 +168,13 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
     try {
       const systemPrompt = this.buildContextFromTemplate(character, timeRemaining);
       const authorsNote = settingsManager.getAuthorsNote();
-      
+
       // Calculate available tokens for conversation history
       const memoryTokenLimit = settingsManager.getMemoryTokens();
-      
+
       // Get messages that fit within token limit
       const recentHistory = tokenCounter.getMessagesWithinTokenLimit(
-        conversationHistory, 
+        conversationHistory,
         memoryTokenLimit
       );
 
@@ -210,6 +210,7 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
 
       console.log(`Using ${recentHistory.length}/${conversationHistory.length} messages within ${memoryTokenLimit} token limit`);
       console.log(`Total estimated tokens: ${debugInfo.total}/${settingsManager.getContextLength()}`);
+      console.log('Recent messages included in context:', recentHistory.map(m => `${m.sender}: ${m.text.substring(0, 50)}...`));
 
       // Get current settings
       const model = settingsManager.getLLMModel();
@@ -253,7 +254,7 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
       // Use token-based memory for extension decision too
       const memoryTokenLimit = Math.floor(settingsManager.getMemoryTokens() / 2); // Use less for decision
       const recentHistory = tokenCounter.getMessagesWithinTokenLimit(
-        conversationHistory, 
+        conversationHistory,
         memoryTokenLimit
       );
 

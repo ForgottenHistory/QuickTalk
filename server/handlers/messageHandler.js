@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const sessionManager = require('../managers/sessionManager');
 const aiService = require('../services/aiService');
-const textFormatter = require('../services/textFormatter'); // ADD THIS LINE
+const textFormatter = require('../services/textFormatter');
 
 const handleMessage = async (io, socket, sessionId, message) => {
   console.log(`Received message for session ${sessionId}: "${message}"`);
@@ -103,7 +103,6 @@ const handleMessage = async (io, socket, sessionId, message) => {
   }, thinkingDelay);
 };
 
-// REPLACE the cleanResponse function with this:
 const formatAIResponse = (responseText) => {
   if (!responseText || typeof responseText !== 'string') {
     return null;

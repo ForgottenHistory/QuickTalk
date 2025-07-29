@@ -288,11 +288,54 @@ You are participating in Quicktalk - a unique chat platform where humans have ti
   };
 
   const getConversationHistory = (currentMessage: string): string => {
-    const recentHistory = state.messages.slice(-6);
+    // Use the same token-based logic as the backend
+    const memoryTokenLimit = settings.llmSettings.memoryTokens;
+
+    // Simple token estimation (matching backend logic)
+    const estimateTokens = (text: string): number => {
+      if (!text) return 0;
+      let charCount = text.length;
+      let estimatedTokens = Math.ceil(charCount / 4);
+      estimatedTokens = Math.ceil(estimatedTokens * 1.1); // Add buffer
+      return Math.max(1, estimatedTokens);
+    };
+
+    const estimateMessageTokens = (message: any): number => {
+      const roleTokens = 4; // Overhead for role formatting
+      const contentTokens = estimateTokens(message.text || '');
+      return roleTokens + contentTokens;
+    };
+
+    // Get messages within token limit (working backwards from newest)
+    const result = [];
+    let totalTokens = 0;
+
+    // Add current message tokens if provided
+    if (currentMessage.trim()) {
+      totalTokens += estimateMessageTokens({ text: currentMessage });
+    }
+
+    // Work backwards from most recent messages
+    for (let i = state.messages.length - 1; i >= 0; i--) {
+      const message = state.messages[i];
+      const messageTokens = estimateMessageTokens(message);
+
+      // Check if adding this message would exceed the limit
+      if (totalTokens + messageTokens > memoryTokenLimit) {
+        console.log(`Prompt Inspector: Excluding older message due to token limit (${totalTokens + messageTokens} > ${memoryTokenLimit})`);
+        break;
+      }
+
+      result.unshift(message); // Add to beginning to maintain chronological order
+      totalTokens += messageTokens;
+    }
+
+    console.log(`Prompt Inspector: Using ${result.length}/${state.messages.length} messages within ${memoryTokenLimit} token limit (${totalTokens} tokens)`);
+
     const historyParts: string[] = [];
 
     // Add conversation history
-    recentHistory.forEach(msg => {
+    result.forEach(msg => {
       const role = msg.sender === 'user' ? 'Human' : (state.aiCharacter?.name || 'Assistant');
       historyParts.push(`${role}: ${msg.text}`);
     });
