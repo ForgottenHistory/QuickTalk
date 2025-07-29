@@ -16,7 +16,7 @@ A real-time chat application for timed conversations with AI characters. Each se
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/quicktalk.git
+   git clone https://github.com/ForgottenHistory/quicktalk.git
    cd quicktalk
    ```
 
